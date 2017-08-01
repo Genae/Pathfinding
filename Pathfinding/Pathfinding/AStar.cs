@@ -12,8 +12,11 @@ namespace Pathfinding
         public static Path GetPath(VoxelGraph graph, Vector3 from, Vector3 to, Path path)
         {
             var start = DateTime.Now;
-            var closeSet = new HashSet<Node>();
             var openSet = new PriorityQueue<PathNode>();
+            var size = graph.GetSize();
+            var statusSet = new NodeStatus[(int) size[0], (int) size[1], (int) size[2]];
+            //var closedHashSet = new HashSet<Vector3>();
+            //var openedHashSet = new HashSet<Vector3>();
             var nodeFrom = new PathNode(graph.GetNode(from), null, 0);
             var nodeTo = new PathNode(graph.GetNode(to), null, 0);
             if (nodeTo.GridNode == null || nodeFrom.GridNode == null)
@@ -32,20 +35,30 @@ namespace Pathfinding
                     //Debug.Log("Found path between " + nodeFrom.GridNode.Position + " and " + nodeTo.GridNode.Position + " of length: " + path.Length + " in " + (DateTime.Now-start).TotalMilliseconds + "ms.");
                     return path;
                 }
-                closeSet.Add(curNode.GridNode);
+                //closedHashSet.Add(curNode.GridNode.Position);
+                SetStatus(curNode.GridNode.Position, NodeStatus.Closed, statusSet);
                 foreach (var neighbour in curNode.GridNode.Neighbours)
                 {
-                    if (closeSet.Contains(neighbour.Key))
+                    var status = GetStatus(neighbour.Key.Position, statusSet);
+                    if (status != NodeStatus.None)
                         continue;
                     var node = new PathNode(neighbour.Key, curNode, neighbour.Value);
-                    if (!openSet.Contains(node))
-                    {
-                        openSet.Enqueue(node, node.GetCost(nodeTo));
-                    }
+                    openSet.Enqueue(node, node.GetCost(nodeTo));
+                    SetStatus(neighbour.Key.Position, NodeStatus.Opened, statusSet);
                 }
             }
             //Debug.Log("Couldn't find path between " + nodeFrom.GridNode + " and " + nodeTo.GridNode + " in " + (DateTime.Now - start).TotalMilliseconds + "ms.");
             return path;
+        }
+
+        private static void SetStatus(Vector3 pos, NodeStatus status, NodeStatus[,,] statusSet)
+        {
+            statusSet[(int)pos.x, (int)pos.y, (int)pos.z] = status;
+        }
+
+        private static NodeStatus GetStatus(Vector3 pos, NodeStatus[,,] statusSet)
+        {
+            return statusSet[(int) pos.x, (int) pos.y, (int) pos.z];
         }
 
         private static Path ReconstructPath(PathNode node, Path path)
@@ -63,6 +76,13 @@ namespace Pathfinding
             return path;
         }
         
+    }
+
+    public enum NodeStatus
+    {
+        None,
+        Opened,
+        Closed
     }
 
     public class Path : Promise
