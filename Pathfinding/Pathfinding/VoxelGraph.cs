@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
@@ -49,7 +50,7 @@ namespace Pathfinding
 
     public class Node
     {
-        public Dictionary<Node, float> Neighbours = new Dictionary<Node, float>();
+        public List<Edge> Neighbours = new List<Edge>();
         public Vector3 Position;
 
         public Node(Vector3 position)
@@ -59,19 +60,33 @@ namespace Pathfinding
 
         public void ConnectTo(Node node, float dist)
         {
-            Neighbours.Add(node, dist);
-            node.Neighbours.Add(this, dist);
+            Neighbours.Add(new Edge(this, node, dist));
+            node.Neighbours.Add(new Edge(node, this, dist));
         }
     }
 
-    public class Grid3D<T>
+    public class Edge
+    {
+        public Node To;
+        public Node From;
+        public float Length;
+
+        public Edge(Node from, Node to, float length)
+        {
+            From = from;
+            To = to;
+            Length = length;
+        }
+    }
+
+    public class Grid3D<T> where T: class
     {
         private readonly Dictionary<int, Dictionary<int, Dictionary<int, T>>> _nodes = new Dictionary<int, Dictionary<int, Dictionary<int, T>>>();
         private Vector3 _size;
 
         public T this[int xPos, int yPos, int zPos]
         {
-            get => _nodes.ContainsKey(xPos) && _nodes[xPos].ContainsKey(yPos) && _nodes[xPos][yPos].ContainsKey(zPos) ? _nodes[xPos][yPos][zPos] : default(T);
+            get => _nodes.ContainsKey(xPos) && _nodes[xPos].ContainsKey(yPos) && _nodes[xPos][yPos].ContainsKey(zPos) ? _nodes[xPos][yPos][zPos] : null;
             set
             {
                 _size = default(Vector3);
@@ -80,6 +95,28 @@ namespace Pathfinding
                 if (!_nodes[xPos].ContainsKey(yPos))
                     _nodes[xPos][yPos] = new Dictionary<int, T>();
                 _nodes[xPos][yPos][zPos] = value; }
+        }
+
+        public T GetNearestItem(Vector3 pos, int maxRadius)
+        {
+            var x = (int) pos.x;
+            var y = (int) pos.y;
+            var z = (int) pos.z;
+            for (var dX = 0; dX <= maxRadius; dX++)
+            {
+                for (var dY = 0; dY <= maxRadius; dY++)
+                {
+                    for (var dZ = 0; dZ <= maxRadius; dZ++)
+                    {
+                        return this[x + dX, y + dY, z + dZ] ?? this[x - dX, y + dY, z + dZ] ??
+                               this[x + dX, y - dY, z + dZ] ?? this[x - dX, y - dY, z + dZ] ??
+                               this[x + dX, y + dY, z - dZ] ?? this[x - dX, y + dY, z - dZ] ??
+                               this[x + dX, y - dY, z - dZ] ?? this[x - dX, y - dY, z - dZ];
+
+                    }
+                }
+            }
+            return null;
         }
 
         public Vector3 GetSize()

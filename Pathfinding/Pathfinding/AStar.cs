@@ -39,12 +39,12 @@ namespace Pathfinding
                 SetStatus(curNode.GridNode.Position, NodeStatus.Closed, statusSet);
                 foreach (var neighbour in curNode.GridNode.Neighbours)
                 {
-                    var status = GetStatus(neighbour.Key.Position, statusSet);
+                    var status = GetStatus(neighbour.To.Position, statusSet);
                     if (status != NodeStatus.None)
                         continue;
-                    var node = new PathNode(neighbour.Key, curNode, neighbour.Value);
+                    var node = new PathNode(neighbour.To, curNode, neighbour.Length);
                     openSet.Enqueue(node, node.GetCost(nodeTo));
-                    SetStatus(neighbour.Key.Position, NodeStatus.Opened, statusSet);
+                    SetStatus(neighbour.To.Position, NodeStatus.Opened, statusSet);
                 }
             }
             //Debug.Log("Couldn't find path between " + nodeFrom.GridNode + " and " + nodeTo.GridNode + " in " + (DateTime.Now - start).TotalMilliseconds + "ms.");

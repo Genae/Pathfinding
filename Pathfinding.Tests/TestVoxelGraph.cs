@@ -20,11 +20,11 @@ namespace Pathfinding.Tests
 
             var n1 = graph.GetNode(new Vector3(0, 0, 0));
             Assert.NotNull(n1);
-            var n2 = n1.Neighbours.Keys.FirstOrDefault(n => n.Position.z.Equals(1));
+            var n2 = n1.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(1))?.To;
             Assert.NotNull(n2);
-            var n3 = n2.Neighbours.Keys.FirstOrDefault(n => n.Position.z.Equals(2));
+            var n3 = n2.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(2))?.To;
             Assert.NotNull(n3);
-            var n4 = n3.Neighbours.Keys.FirstOrDefault(n => n.Position.z.Equals(3));
+            var n4 = n3.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(3))?.To;
             Assert.NotNull(n4);
         }
 
@@ -50,6 +50,17 @@ namespace Pathfinding.Tests
             var path = Path.Calculate(graph, new Vector3(12, 0, 12), new Vector3(959, 0, 479));
             path.Task.Wait();
             DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");
+            Assert.True(path.Finished);
+        }
+
+        [Fact]
+        public void TestAStarMaceWithDeadEnds()
+        {
+            var img = LoadImage("Images/maze_by_pannekaka.jpg");
+            var graph = GetGraphFromImage(img);
+            var path = Path.Calculate(graph, new Vector3(20, 0, 1185), new Vector3(1563, 0, 25));
+            path.Task.Wait();
+            DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
             Assert.True(path.Finished);
         }
 
