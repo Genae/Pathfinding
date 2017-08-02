@@ -39,10 +39,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar.cs" />
+    <Compile Include="Floodfill.cs" />
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Util\PriorityQueue.cs" />
     <Compile Include="Util\Promise.cs" />
     <Compile Include="Util\Vector3.cs" />
+    <Compile Include="Util\Vector3i.cs" />
     <Compile Include="VoxelGraph.cs" />
   </ItemGroup>
   <ItemGroup>

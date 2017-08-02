@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Pathfinding.Util;
 
@@ -9,12 +7,12 @@ namespace Pathfinding
 {
     public class AStar
     {
-        public static Path GetPath(VoxelGraph graph, Vector3 from, Vector3 to, Path path)
+        public static Path GetPath(VoxelGraph graph, Vector3I from, Vector3I to, Path path)
         {
             var start = DateTime.Now;
             var openSet = new PriorityQueue<PathNode>();
             var size = graph.GetSize();
-            var statusSet = new NodeStatus[(int) size[0], (int) size[1], (int) size[2]];
+            var statusSet = new NodeStatus[size[0], size[1], size[2]];
             //var closedHashSet = new HashSet<Vector3>();
             //var openedHashSet = new HashSet<Vector3>();
             var nodeFrom = new PathNode(graph.GetNode(from), null, 0);
@@ -51,14 +49,14 @@ namespace Pathfinding
             return path;
         }
 
-        private static void SetStatus(Vector3 pos, NodeStatus status, NodeStatus[,,] statusSet)
+        private static void SetStatus(Vector3I pos, NodeStatus status, NodeStatus[,,] statusSet)
         {
-            statusSet[(int)pos.x, (int)pos.y, (int)pos.z] = status;
+            statusSet[pos.x, pos.y, pos.z] = status;
         }
 
-        private static NodeStatus GetStatus(Vector3 pos, NodeStatus[,,] statusSet)
+        private static NodeStatus GetStatus(Vector3I pos, NodeStatus[,,] statusSet)
         {
-            return statusSet[(int) pos.x, (int) pos.y, (int) pos.z];
+            return statusSet[pos.x, pos.y, pos.z];
         }
 
         private static Path ReconstructPath(PathNode node, Path path)
@@ -123,7 +121,7 @@ namespace Pathfinding
             }
         }*/
 
-        public static Path Calculate(VoxelGraph graph, Vector3 from, Vector3 to)
+        public static Path Calculate(VoxelGraph graph, Vector3I from, Vector3I to)
         {
             var path = new Path(null, 0);
             //path.Task = new Task(() => UNITY3D

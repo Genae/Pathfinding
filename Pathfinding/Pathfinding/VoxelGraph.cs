@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
+using Pathfinding.Util;
 
 namespace Pathfinding
 {
     public class VoxelGraph
     {
         private readonly Grid3D<Node> _grid = new Grid3D<Node>();
+        private readonly Grid3D<Node> _gridT1 = new Grid3D<Node>();
 
         public void AddNode(int xPos, int yPos, int zPos)
         {
-            _grid[xPos, yPos, zPos] = new Node(new Vector3(xPos, yPos, zPos));
+            _grid[xPos, yPos, zPos] = new Node(new Vector3I(xPos, yPos, zPos));
             ConnectNeighbours(xPos, yPos, zPos);
         }
 
@@ -36,14 +38,37 @@ namespace Pathfinding
             }
         }
 
-        public Vector3 GetSize()
+        public void AddTier1Nodes(int gridSize)
+        {
+            var size = GetSize();
+            for (var dX = Math.Min(gridSize/2, size[0]); dX <= size[0]; dX+=gridSize)
+            {
+                for (var dY = Math.Min(gridSize / 2, size[1]) / 2; dY <= size[1]; dY += gridSize)
+                {
+                    for (var dZ = Math.Min(gridSize / 2, size[2]); dZ <= size[2]; dZ += gridSize)
+                    {
+                        var node = _grid.GetNearestItem(new Vector3I(dX, dY, dZ), 5);
+                        if (node == null)
+                            continue;
+                        _gridT1[dX, dY, dZ] = new Node(node.Position);
+                    }
+                }
+            }
+        }
+
+        public Vector3I GetSize()
         {
             return _grid.GetSize();
         }
 
-        public Node GetNode(Vector3 from)
+        public Node GetNode(Vector3I from)
         {
-            return _grid[(int) from.x, (int) from.y, (int) from.z];
+            return _grid[from.x, from.y, from.z];
+        }
+
+        public IEnumerable<Node> GetT1Nodes()
+        {
+            return _gridT1;
         }
     }
     
@@ -51,9 +76,9 @@ namespace Pathfinding
     public class Node
     {
         public List<Edge> Neighbours = new List<Edge>();
-        public Vector3 Position;
+        public Vector3I Position;
 
-        public Node(Vector3 position)
+        public Node(Vector3I position)
         {
             Position = position;
         }
@@ -63,6 +88,16 @@ namespace Pathfinding
             Neighbours.Add(new Edge(this, node, dist));
             node.Neighbours.Add(new Edge(node, this, dist));
         }
+    }
+
+    public class SuperNode : Node
+    {
+
+        public SuperNode(Vector3I position) : base(position)
+        {
+        }
+
+
     }
 
     public class Edge
@@ -79,17 +114,27 @@ namespace Pathfinding
         }
     }
 
-    public class Grid3D<T> where T: class
+    public class SuperNodeConnection : Edge
+    {
+        public SuperNode SuperNode;
+
+        public SuperNodeConnection(Node from, Node to, SuperNode superNode, float length) : base(from, to, length)
+        {
+            SuperNode = superNode;
+        }
+    }
+
+    public class Grid3D<T> : IEnumerable<T> where T: class
     {
         private readonly Dictionary<int, Dictionary<int, Dictionary<int, T>>> _nodes = new Dictionary<int, Dictionary<int, Dictionary<int, T>>>();
-        private Vector3 _size;
+        private Vector3I _size;
 
         public T this[int xPos, int yPos, int zPos]
         {
             get => _nodes.ContainsKey(xPos) && _nodes[xPos].ContainsKey(yPos) && _nodes[xPos][yPos].ContainsKey(zPos) ? _nodes[xPos][yPos][zPos] : null;
             set
             {
-                _size = default(Vector3);
+                _size = default(Vector3I);
                 if (!_nodes.ContainsKey(xPos))
                     _nodes[xPos] = new Dictionary<int, Dictionary<int, T>>();
                 if (!_nodes[xPos].ContainsKey(yPos))
@@ -97,21 +142,26 @@ namespace Pathfinding
                 _nodes[xPos][yPos][zPos] = value; }
         }
 
-        public T GetNearestItem(Vector3 pos, int maxRadius)
+        public T this[Vector3I v]
         {
-            var x = (int) pos.x;
-            var y = (int) pos.y;
-            var z = (int) pos.z;
+            get => this[v.x, v.y, v.z];
+            set => this[v.x, v.y, v.z] = value;
+        }
+
+        public T GetNearestItem(Vector3I pos, int maxRadius)
+        {
             for (var dX = 0; dX <= maxRadius; dX++)
             {
                 for (var dY = 0; dY <= maxRadius; dY++)
                 {
                     for (var dZ = 0; dZ <= maxRadius; dZ++)
                     {
-                        return this[x + dX, y + dY, z + dZ] ?? this[x - dX, y + dY, z + dZ] ??
-                               this[x + dX, y - dY, z + dZ] ?? this[x - dX, y - dY, z + dZ] ??
-                               this[x + dX, y + dY, z - dZ] ?? this[x - dX, y + dY, z - dZ] ??
-                               this[x + dX, y - dY, z - dZ] ?? this[x - dX, y - dY, z - dZ];
+                        var node = this[pos.x + dX, pos.y + dY, pos.z + dZ] ?? this[pos.x - dX, pos.y + dY, pos.z + dZ] ??
+                               this[pos.x + dX, pos.y - dY, pos.z + dZ] ?? this[pos.x - dX, pos.y - dY, pos.z + dZ] ??
+                               this[pos.x + dX, pos.y + dY, pos.z - dZ] ?? this[pos.x - dX, pos.y + dY, pos.z - dZ] ??
+                               this[pos.x + dX, pos.y - dY, pos.z - dZ] ?? this[pos.x - dX, pos.y - dY, pos.z - dZ];
+                        if (node != null)
+                            return node;
 
                     }
                 }
@@ -119,16 +169,26 @@ namespace Pathfinding
             return null;
         }
 
-        public Vector3 GetSize()
+        public Vector3I GetSize()
         {
-            if (_size == default(Vector3))
+            if (_size == default(Vector3I))
             {
-                _size = new Vector3();
-                _size.x = _nodes.Max(v => v.Key) + 1;
-                _size.y = _nodes.Values.Max(yDics => yDics.Max(v => v.Key)) + 1;
-                _size.z = _nodes.Values.Max(yDics => yDics.Values.Max(zDics => zDics.Max(v => v.Key))) + 1;
+                var x = _nodes.Max(v => v.Key) + 1;
+                var y = _nodes.Values.Max(yDics => yDics.Max(v => v.Key)) + 1;
+                var z = _nodes.Values.Max(yDics => yDics.Values.Max(zDics => zDics.Max(v => v.Key))) + 1;
+                _size = new Vector3I(x, y, z);
             }
             return _size;
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _nodes.Values.SelectMany(x => x.Values.SelectMany(y => y.Values.Select(z => z))).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

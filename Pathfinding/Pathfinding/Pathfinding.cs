@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Pathfinding
+﻿namespace Pathfinding
 {
     public class Pathfinding
     {

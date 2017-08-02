@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Pathfinding.Util;
 using Xunit;
 
 namespace Pathfinding.Tests
@@ -18,7 +20,7 @@ namespace Pathfinding.Tests
             graph.AddNode(0, 1, 3);
             graph.AddNode(1, 0, 2);
 
-            var n1 = graph.GetNode(new Vector3(0, 0, 0));
+            var n1 = graph.GetNode(new Vector3I(0, 0, 0));
             Assert.NotNull(n1);
             var n2 = n1.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(1))?.To;
             Assert.NotNull(n2);
@@ -37,7 +39,7 @@ namespace Pathfinding.Tests
             graph.AddNode(0, 1, 3);
             graph.AddNode(1, 0, 2);
 
-            var path = Path.Calculate(graph, new Vector3(0, 0, 0), new Vector3(0, 1, 3));
+            var path = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(0, 1, 3));
             path.Task.Wait();
             Assert.True(path.Finished);
         }
@@ -47,7 +49,7 @@ namespace Pathfinding.Tests
         {
             var img = LoadImage("Images/MAZE_40x20_DFS_no_deadends.png");
             var graph = GetGraphFromImage(img);
-            var path = Path.Calculate(graph, new Vector3(12, 0, 12), new Vector3(959, 0, 479));
+            var path = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479));
             path.Task.Wait();
             DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");
             Assert.True(path.Finished);
@@ -58,13 +60,16 @@ namespace Pathfinding.Tests
         {
             var img = LoadImage("Images/maze_by_pannekaka.jpg");
             var graph = GetGraphFromImage(img);
-            var path = Path.Calculate(graph, new Vector3(20, 0, 1185), new Vector3(1563, 0, 25));
+            graph.AddTier1Nodes(30);
+            DrawNodesToImage(img, graph.GetT1Nodes());
+            var path = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25));
             path.Task.Wait();
             DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
             Assert.True(path.Finished);
         }
+        
 
-
+        #region util
         private Bitmap LoadImage(string path)
         {
             var src = new Bitmap(Environment.CurrentDirectory + "/" + path);
@@ -105,5 +110,14 @@ namespace Pathfinding.Tests
             }
             img.Save(output);
         }
+
+        private void DrawNodesToImage(Bitmap img, IEnumerable<Node> t1Nodes)
+        {
+            foreach (var t1Node in t1Nodes)
+            {
+                img.SetPixel((int)t1Node.Position.x, (int)t1Node.Position.z, Color.Green);
+            }
+        }
+        #endregion
     }
 }
