@@ -18,7 +18,7 @@ namespace Pathfinding
             {
                 var current = openQueue.Dequeue();
                 current.GridNode.ConnectSuperNode(current.Prev?.GridNode ?? supernode, supernode, current.GScore);
-                foreach (var neighbour in current.GridNode.Neighbours)
+                foreach (var neighbour in current.GridNode.GetNeighbours())
                 {
                     if (!neighbour.To.SuperNodes.ContainsKey(supernode) && neighbour.Length + current.GScore < range)
                     {

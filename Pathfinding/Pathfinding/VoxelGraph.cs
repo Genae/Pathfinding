@@ -13,7 +13,7 @@ namespace Pathfinding
 
         public void AddNode(int xPos, int yPos, int zPos)
         {
-            _grid[xPos, yPos, zPos] = new Node(new Vector3I(xPos, yPos, zPos));
+            _grid[xPos, yPos, zPos] = new T0Node(new Vector3I(xPos, yPos, zPos));
             ConnectNeighbours(xPos, yPos, zPos);
         }
 
@@ -41,7 +41,33 @@ namespace Pathfinding
         public void AddTier1Nodes(int gridSize)
         {
             var size = GetSize();
-            for (var dX = Math.Min(gridSize/2, size[0]); dX <= size[0]; dX+=gridSize)
+            AddSupernodeGrid(gridSize, size);
+            FillSupernodeHoles(gridSize, size);
+        }
+
+        private void FillSupernodeHoles(int gridSize, Vector3I size)
+        {
+            for (var dX = 0; dX <= size[0]; dX++)
+            {
+                for (var dY = 0; dY <= size[1]; dY++)
+                {
+                    for (var dZ = 0; dZ <= size[2]; dZ++)
+                    {
+                        var node = _grid[dX, dY, dZ];
+                        if (node == null || node.SuperNodes.Count > 0)
+                            continue;
+                        var supernode = new SuperNode(node.Position);
+                        _gridT1[dX, dY, dZ] = supernode;
+
+                        Floodfill.Fill(this, supernode.Position, gridSize, supernode);
+                    }
+                }
+            }
+        }
+
+        private void AddSupernodeGrid(int gridSize, Vector3I size)
+        { 
+            for (var dX = Math.Min(gridSize / 2, size[0]); dX <= size[0]; dX += gridSize)
             {
                 for (var dY = Math.Min(gridSize / 2, size[1]) / 2; dY <= size[1]; dY += gridSize)
                 {
@@ -76,21 +102,15 @@ namespace Pathfinding
     }
     
 
-    public class Node
+
+    public abstract class Node
     {
-        public List<Edge> Neighbours = new List<Edge>();
         public Dictionary<SuperNode, SuperNodeConnection> SuperNodes = new Dictionary<SuperNode, SuperNodeConnection>();
         public Vector3I Position;
 
-        public Node(Vector3I position)
+        protected Node(Vector3I position)
         {
             Position = position;
-        }
-        
-        public void ConnectTo(Node node, float dist)
-        {
-            Neighbours.Add(new Edge(this, node, dist));
-            node.Neighbours.Add(new Edge(node, this, dist));
         }
 
         public void ConnectSuperNode(Node from, SuperNode superNode, float dist)
@@ -106,6 +126,37 @@ namespace Pathfinding
             }
             SuperNodes[superNode] = new SuperNodeConnection(this, from, superNode, dist);
         }
+
+        public Node GetClosestSuperNode()
+        {
+            var min = SuperNodes.Min(kv => kv.Value.Length);
+            return SuperNodes.FirstOrDefault(n => Equals(n.Value.Length, min)).Key;
+        }
+
+        public abstract void ConnectTo(Node node, float dist);
+
+        public abstract List<Edge> GetNeighbours();
+    }
+
+
+    public class T0Node : Node
+    {
+        private readonly List<Edge> _neighbours = new List<Edge>();
+
+        public T0Node(Vector3I position) : base(position)
+        {
+        }
+
+        public override void ConnectTo(Node node, float dist)
+        {
+            _neighbours.Add(new Edge(this, node, dist));
+            node.GetNeighbours().Add(new Edge(node, this, dist));
+        }
+
+        public override List<Edge> GetNeighbours()
+        {
+            return _neighbours;
+        }
     }
 
     public class SuperNode : Node
@@ -115,7 +166,15 @@ namespace Pathfinding
         {
         }
 
+        public override void ConnectTo(Node node, float dist)
+        {
+            throw new NotImplementedException();
+        }
 
+        public override List<Edge> GetNeighbours()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class Edge

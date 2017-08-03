@@ -6,14 +6,12 @@ namespace Pathfinding.Util
     public class PriorityQueue<T>
     {
         private int _totalSize;
-        private readonly SortedDictionary<int, Queue<T>> _storage;
-        private readonly Dictionary<int, int> _count;
+        private readonly SortedDictionary<int, List<T>> _storage;
         private int _lowestPrio = -1;
 
         public PriorityQueue()
         {
-            _storage = new SortedDictionary<int, Queue<T>>();
-            _count = new Dictionary<int, int>();
+            _storage = new SortedDictionary<int, List<T>>();
             _totalSize = 0;
         }
 
@@ -30,9 +28,9 @@ namespace Pathfinding.Util
             }
             var q = _storage[_lowestPrio];
             _totalSize--;
-            _count[_lowestPrio]--;
-            var deq = q.Dequeue();
-            if (_count[_lowestPrio] == 0)
+            var deq = q[q.Count-1];
+            q.RemoveAt(q.Count-1);
+            if (q.Count == 0)
             {
                 _storage.Remove(_lowestPrio);
                 if (IsEmpty())
@@ -49,11 +47,9 @@ namespace Pathfinding.Util
             {
                 if (_lowestPrio < 0 || _lowestPrio > prio)
                     _lowestPrio = prio;
-                _storage.Add(prio, new Queue<T>());
-                _count[prio] = 0;
+                _storage.Add(prio, new List<T>());
             }
-            _storage[prio].Enqueue(item);
-            _count[prio]++;
+            _storage[prio].Add(item);
             _totalSize++;
 
         }
@@ -74,15 +70,12 @@ namespace Pathfinding.Util
 
         private void Dequeue(T oldObj, int oldPrio)
         {
-            var queue = _storage[oldPrio];
-            T cur;
-            while (!(cur = queue.Dequeue()).Equals(oldObj))
-            {
-                queue.Enqueue(cur);
-            }
-            _count[oldPrio]--;
+            var q = _storage[oldPrio];
+            int index = q.IndexOf(oldObj);
+            q[index] = q[q.Count - 1];
+            q.RemoveAt(q.Count - 1);
             _totalSize--;
-            if (_count[oldPrio] == 0)
+            if (q.Count == 0)
             {
                 _storage.Remove(oldPrio);
                 if (IsEmpty())

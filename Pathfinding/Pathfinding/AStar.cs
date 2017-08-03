@@ -14,8 +14,6 @@ namespace Pathfinding
             var pathNodeMap = new Dictionary<Node, PathNode>();
             var size = graph.GetSize();
             var statusSet = new NodeStatus[size[0], size[1], size[2]];
-            //var closedHashSet = new HashSet<Vector3>();
-            //var openedHashSet = new HashSet<Vector3>();
             var nodeFrom = new PathNode(graph.GetNode(from), null, 0);
             var nodeTo = new PathNode(graph.GetNode(to), null, 0);
             if (nodeTo.GridNode == null || nodeFrom.GridNode == null)
@@ -36,7 +34,7 @@ namespace Pathfinding
                 }
                 //closedHashSet.Add(curNode.GridNode.Position);
                 SetStatus(curNode.GridNode.Position, NodeStatus.Closed, statusSet);
-                foreach (var neighbour in curNode.GridNode.Neighbours)
+                foreach (var neighbour in curNode.GridNode.GetNeighbours())
                 {
                     var status = GetStatus(neighbour.To.Position, statusSet);
                     if (status == NodeStatus.Closed)

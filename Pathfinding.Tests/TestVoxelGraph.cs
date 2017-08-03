@@ -22,11 +22,11 @@ namespace Pathfinding.Tests
 
             var n1 = graph.GetNode(new Vector3I(0, 0, 0));
             Assert.NotNull(n1);
-            var n2 = n1.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(1))?.To;
+            var n2 = n1.GetNeighbours().FirstOrDefault(n => n.To.Position.z.Equals(1))?.To;
             Assert.NotNull(n2);
-            var n3 = n2.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(2))?.To;
+            var n3 = n2.GetNeighbours().FirstOrDefault(n => n.To.Position.z.Equals(2))?.To;
             Assert.NotNull(n3);
-            var n4 = n3.Neighbours.FirstOrDefault(n => n.To.Position.z.Equals(3))?.To;
+            var n4 = n3.GetNeighbours().FirstOrDefault(n => n.To.Position.z.Equals(3))?.To;
             Assert.NotNull(n4);
         }
 
@@ -61,7 +61,7 @@ namespace Pathfinding.Tests
             var img = LoadImage("Images/maze_by_pannekaka.jpg");
             var graph = GetGraphFromImage(img);
             graph.AddTier1Nodes(30);
-            DrawNodesToImage(img, graph.GetT1Nodes());
+            DrawNodesToImage(img, graph);
             var path = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25));
             path.Task.Wait();
             DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
@@ -111,11 +111,19 @@ namespace Pathfinding.Tests
             img.Save(output);
         }
 
-        private void DrawNodesToImage(Bitmap img, IEnumerable<Node> t1Nodes)
+        private void DrawNodesToImage(Bitmap img, VoxelGraph graph)
         {
-            foreach (var t1Node in t1Nodes)
+            var rand = new Random();
+            var colors = graph.GetT1Nodes().ToDictionary(n => n, n => Color.FromArgb(rand.Next(255), rand.Next(255), rand.Next(255)));
+
+            for (var x = 0; x < img.Width; x++)
             {
-                img.SetPixel((int)t1Node.Position.x, (int)t1Node.Position.z, Color.Green);
+                for (var y = 0; y < img.Height; y++)
+                {
+                    var node = graph.GetNode(new Vector3I(x, 0, y));
+                    if(node != null && node.SuperNodes.Count > 0)
+                        img.SetPixel(x, y, colors[node.GetClosestSuperNode()]);
+                }
             }
         }
         #endregion
