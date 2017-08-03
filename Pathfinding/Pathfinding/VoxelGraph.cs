@@ -9,7 +9,7 @@ namespace Pathfinding
     public class VoxelGraph
     {
         private readonly Grid3D<Node> _grid = new Grid3D<Node>();
-        private readonly Grid3D<Node> _gridT1 = new Grid3D<Node>();
+        private readonly Grid3D<SuperNode> _gridT1 = new Grid3D<SuperNode>();
 
         public void AddNode(int xPos, int yPos, int zPos)
         {
@@ -50,7 +50,10 @@ namespace Pathfinding
                         var node = _grid.GetNearestItem(new Vector3I(dX, dY, dZ), 5);
                         if (node == null)
                             continue;
-                        _gridT1[dX, dY, dZ] = new Node(node.Position);
+                        var supernode = new SuperNode(node.Position);
+                        _gridT1[dX, dY, dZ] = supernode;
+
+                        Floodfill.Fill(this, supernode.Position, gridSize, supernode);
                     }
                 }
             }
@@ -76,23 +79,38 @@ namespace Pathfinding
     public class Node
     {
         public List<Edge> Neighbours = new List<Edge>();
+        public Dictionary<SuperNode, SuperNodeConnection> SuperNodes = new Dictionary<SuperNode, SuperNodeConnection>();
         public Vector3I Position;
 
         public Node(Vector3I position)
         {
             Position = position;
         }
-
+        
         public void ConnectTo(Node node, float dist)
         {
             Neighbours.Add(new Edge(this, node, dist));
             node.Neighbours.Add(new Edge(node, this, dist));
         }
+
+        public void ConnectSuperNode(Node from, SuperNode superNode, float dist)
+        {
+            if (SuperNodes.ContainsKey(superNode))
+            {
+                if (SuperNodes[superNode].Length <= dist)
+                    return;
+            }
+            else
+            {
+                superNode.ChildNodes.Add(this);
+            }
+            SuperNodes[superNode] = new SuperNodeConnection(this, from, superNode, dist);
+        }
     }
 
     public class SuperNode : Node
     {
-
+        public List<Node> ChildNodes = new List<Node>();
         public SuperNode(Vector3I position) : base(position)
         {
         }

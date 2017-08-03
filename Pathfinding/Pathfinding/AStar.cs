@@ -11,6 +11,7 @@ namespace Pathfinding
         {
             var start = DateTime.Now;
             var openSet = new PriorityQueue<PathNode>();
+            var pathNodeMap = new Dictionary<Node, PathNode>();
             var size = graph.GetSize();
             var statusSet = new NodeStatus[size[0], size[1], size[2]];
             //var closedHashSet = new HashSet<Vector3>();
@@ -22,7 +23,7 @@ namespace Pathfinding
                 //Debug.Log("Could not find start or end Node.");
                 return null;
             }
-            openSet.Enqueue(nodeFrom, nodeFrom.GetCost(nodeTo));
+            openSet.Enqueue(nodeFrom, (int)(nodeFrom.GetCost(nodeTo) * 10));
 
             while (!openSet.IsEmpty())
             {
@@ -38,11 +39,21 @@ namespace Pathfinding
                 foreach (var neighbour in curNode.GridNode.Neighbours)
                 {
                     var status = GetStatus(neighbour.To.Position, statusSet);
-                    if (status != NodeStatus.None)
+                    if (status == NodeStatus.Closed)
                         continue;
-                    var node = new PathNode(neighbour.To, curNode, neighbour.Length);
-                    openSet.Enqueue(node, node.GetCost(nodeTo));
-                    SetStatus(neighbour.To.Position, NodeStatus.Opened, statusSet);
+                    if (status == NodeStatus.Opened)
+                    {
+                        var node = new PathNode(neighbour.To, curNode, neighbour.Length);
+                        if (openSet.Update(pathNodeMap[neighbour.To], (int) (pathNodeMap[neighbour.To].GetCost(nodeTo) * 10), node, (int) (node.GetCost(nodeTo) * 10)))
+                            pathNodeMap[neighbour.To] = node;
+                    }
+                    else
+                    {
+                        var node = new PathNode(neighbour.To, curNode, neighbour.Length);
+                        openSet.Enqueue(node, (int)(node.GetCost(nodeTo) * 10));
+                        pathNodeMap[neighbour.To] = node;
+                        SetStatus(neighbour.To.Position, NodeStatus.Opened, statusSet);
+                    }
                 }
             }
             //Debug.Log("Couldn't find path between " + nodeFrom.GridNode + " and " + nodeTo.GridNode + " in " + (DateTime.Now - start).TotalMilliseconds + "ms.");
@@ -155,9 +166,14 @@ namespace Pathfinding
             }
         }
 
-        public int GetCost(PathNode nodeTo)
+        public float GetCost(PathNode nodeTo)
         {
-            return (int)(GScore + (nodeTo.GridNode.Position - GridNode.Position).magnitude);
+            var a = nodeTo.GridNode.Position;
+            var b = GridNode.Position;
+            var x = a.x - b.x;
+            var y = a.y - b.y;
+            var z = a.z - b.z;
+            return GScore + (float)Math.Sqrt(x*x+y*y+z*z);
         }
 
         public bool Equals(PathNode node)
