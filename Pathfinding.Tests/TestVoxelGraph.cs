@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Pathfinding.Util;
 using Xunit;
+using Pathfinding.Graphs;
+using Pathfinding.Utils;
+using Pathfinding.Pathfinder;
 
 namespace Pathfinding.Tests
 {
@@ -104,9 +103,9 @@ namespace Pathfinding.Tests
             {
                 img.SetPixel((int)pathNode.Position.x, (int)pathNode.Position.z, Color.Red);
             }
-            if (!Directory.GetParent(output).Exists)
+            if (!System.IO.Directory.GetParent(output).Exists)
             {
-                Directory.GetParent(output).Create();
+                System.IO.Directory.GetParent(output).Create();
             }
             img.Save(output);
         }
