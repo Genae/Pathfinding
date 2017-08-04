@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace Pathfinding.Util
+namespace Pathfinding.Utils
 {
     public class PriorityQueue<T>
     {

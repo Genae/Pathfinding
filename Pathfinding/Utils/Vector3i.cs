@@ -1,6 +1,6 @@
 using System;
 
-namespace Pathfinding.Util
+namespace Pathfinding.Utils
 {
     public class Vector3I
     {

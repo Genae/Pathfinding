@@ -1,18 +1,18 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using Pathfinding.Util;
+using Pathfinding.Graphs;
+using Pathfinding.Pathfinder;
+using Pathfinding.Utils;
 
 namespace Pathfinding
 {
-    public class Floodfill
+    public class Dijkstra
     {
         public static void Fill(VoxelGraph graph, Vector3I position, int range, SuperNode supernode)
         {
-            var openQueue = new PriorityQueue<PathNode>();
-            var pathNodeMap = new Dictionary<Node, PathNode>();
+            var openQueue = new PriorityQueue<VisitedNode>();
+            var pathNodeMap = new Dictionary<Node, VisitedNode>();
             var startNode = graph.GetNode(position);
-            pathNodeMap[startNode] = new PathNode(graph.GetNode(position), null, 0);
+            pathNodeMap[startNode] = new VisitedNode(graph.GetNode(position), null, 0);
             openQueue.Enqueue(pathNodeMap[startNode], 0);
             while (!openQueue.IsEmpty())
             {
@@ -22,7 +22,7 @@ namespace Pathfinding
                 {
                     if (!neighbour.To.SuperNodes.ContainsKey(supernode) && neighbour.Length + current.GScore < range)
                     {
-                        var newNode = new PathNode(neighbour.To, current, neighbour.Length);
+                        var newNode = new VisitedNode(neighbour.To, current, neighbour.Length);
                         if (pathNodeMap.ContainsKey(neighbour.To))
                         {
                             if(openQueue.Update(pathNodeMap[neighbour.To], (int)(pathNodeMap[neighbour.To].GScore * 10), newNode, (int)(newNode.GScore * 10)))

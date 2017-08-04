@@ -38,17 +38,27 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AStar.cs" />
-    <Compile Include="Floodfill.cs" />
+    <Compile Include="Graphs\Edge.cs" />
+    <Compile Include="Graphs\Grid3D.cs" />
+    <Compile Include="Graphs\Node.cs" />
+    <Compile Include="Graphs\SuperNode.cs" />
+    <Compile Include="Graphs\T0Node.cs" />
+    <Compile Include="Pathfinder\AStar.cs" />
+    <Compile Include="Pathfinder\Dijkstra.cs" />
+    <Compile Include="Pathfinder\Path.cs" />
+    <Compile Include="Pathfinder\VisitedNode.cs" />
     <Compile Include="Pathfinding.cs" />
-    <Compile Include="Util\PriorityQueue.cs" />
-    <Compile Include="Util\Promise.cs" />
-    <Compile Include="Util\Vector3.cs" />
-    <Compile Include="Util\Vector3i.cs" />
-    <Compile Include="VoxelGraph.cs" />
+    <Compile Include="Utils\PriorityQueue.cs" />
+    <Compile Include="Utils\Promise.cs" />
+    <Compile Include="Utils\Vector3.cs" />
+    <Compile Include="Utils\Vector3i.cs" />
+    <Compile Include="Graphs\VoxelGraph.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Agents\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

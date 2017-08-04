@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
-namespace Pathfinding.Util
+namespace Pathfinding.Utils
 {
     public abstract class Promise
     {
@@ -9,7 +9,7 @@ namespace Pathfinding.Util
         private bool _finished;
         public bool Finished
         {
-            get => _finished;
+            get { return _finished; }
             set
             {
                 _finished = value;

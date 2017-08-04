@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 
 // UNITY3D like implementations to make port easy.
 
-namespace Pathfinding
+namespace Pathfinding.Utils
 {
     public struct Vector3
     {
