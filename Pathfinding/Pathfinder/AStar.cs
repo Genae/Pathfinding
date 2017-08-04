@@ -38,9 +38,9 @@ namespace Pathfinding.Pathfinder
                 curNode.Status = NodeStatus.Closed;
                 foreach (var neighbour in curNode.GridNode.GetNeighbours())
                 {
-                    var pathNode = pathNodeMap[neighbour.To];
-                    if (pathNode != null)
+                    if (pathNodeMap.ContainsKey(neighbour.To))
                     {
+                        var pathNode = pathNodeMap[neighbour.To];
                         if (pathNode.Status == NodeStatus.Closed)
                             continue;
                         var node = new VisitedNode(neighbour.To, curNode, neighbour.Length);

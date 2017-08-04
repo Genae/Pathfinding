@@ -48,6 +48,7 @@ namespace Pathfinding.Tests
         {
             var img = LoadImage("Images/MAZE_40x20_DFS_no_deadends.png");
             var graph = GetGraphFromImage(img);
+            graph.AddTier1Nodes(30);
             var path = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479));
             path.Task.Wait();
             DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");

@@ -36,6 +36,8 @@ namespace Pathfinding.Graphs
 
         public Node GetClosestSuperNode()
         {
+            if (SuperNodes.Count == 0)
+                return null;
             var min = SuperNodes.Min(kv => kv.Value.Length);
             return SuperNodes.FirstOrDefault(n => Equals(n.Value.Length, min)).Key;
         }

@@ -15,7 +15,9 @@ namespace Pathfinding.Graphs
 
         public bool ConnectTo(SuperNode node, float dist, Node via)
         {
-            var old = (SuperNodeEdge)_neigbours[node];
+            SuperNodeEdge old = null;
+            if (_neigbours.ContainsKey(node))
+                 old = (SuperNodeEdge)_neigbours[node];
             if (old == null || old.Length >= dist)
             {
                 _neigbours[node] = new SuperNodeEdge(node, dist, via);
