@@ -1,17 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Pathfinding.Util
 {
-    public class PriorityQueue<T> : IEnumerable<T>
+    public class PriorityQueue<T>
     {
         private int _totalSize;
-        private readonly SortedDictionary<int, Queue<T>> _storage;
+        private readonly SortedDictionary<int, List<T>> _storage;
+        private int _lowestPrio = -1;
 
         public PriorityQueue()
         {
-            _storage = new SortedDictionary<int, Queue<T>>();
+            _storage = new SortedDictionary<int, List<T>>();
             _totalSize = 0;
         }
 
@@ -26,77 +26,63 @@ namespace Pathfinding.Util
             {
                 return default(T);
             }
-            foreach (var q in _storage.Values.Where(q => q.Count > 0))
-            {
-                _totalSize--;
-                return q.Dequeue();
-            }
-            return default(T);
-        }
-
-        // same as above, except for peek.
-
-        public T Peek()
-        {
-            if (IsEmpty())
-                return default(T);
-            foreach (var q in _storage.Values.Where(q => q.Count > 0))
-            {
-                return q.Peek();
-            }
-            return default(T); // not supposed to reach here.
-        }
-
-        public T Dequeue(int prio)
-        {
+            var q = _storage[_lowestPrio];
             _totalSize--;
-            return _storage[prio].Dequeue();
-        }
-
-        public T Dequeue(T item)
-        {
-            _totalSize--;
-            var queue = _storage.Values.First(q => q.Contains(item));
-            T cur;
-            while (!(cur = queue.Dequeue()).Equals(item))
+            var deq = q[q.Count-1];
+            q.RemoveAt(q.Count-1);
+            if (q.Count == 0)
             {
-                queue.Enqueue(cur);
+                _storage.Remove(_lowestPrio);
+                if (IsEmpty())
+                    _lowestPrio = -1;
+                else
+                    _lowestPrio = _storage.First().Key;
             }
-            return item;
+            return deq;
         }
-
+        
         public void Enqueue(T item, int prio)
         {
             if (!_storage.ContainsKey(prio))
             {
-                _storage.Add(prio, new Queue<T>());
+                if (_lowestPrio < 0 || _lowestPrio > prio)
+                    _lowestPrio = prio;
+                _storage.Add(prio, new List<T>());
             }
-            _storage[prio].Enqueue(item);
+            _storage[prio].Add(item);
             _totalSize++;
 
         }
 
-        public PriorityQueue<T> Copy()
+        public float GetPrio()
         {
-            var pq = new PriorityQueue<T>();
-            foreach (var key in _storage.Keys)
+            return _lowestPrio;
+        }
+        
+        public bool Update(T oldObj, int oldPrio, T newObj, int newPrio)
+        {
+            if (oldPrio <= newPrio)
+                return false;
+            Dequeue(oldObj, oldPrio);
+            Enqueue(newObj, newPrio);
+            return true;
+        }
+
+        private void Dequeue(T oldObj, int oldPrio)
+        {
+            var q = _storage[oldPrio];
+            int index = q.IndexOf(oldObj);
+            q[index] = q[q.Count - 1];
+            q.RemoveAt(q.Count - 1);
+            _totalSize--;
+            if (q.Count == 0)
             {
-                foreach (var item in _storage[key])
-                {
-                    pq.Enqueue(item, key);
-                }
+                _storage.Remove(oldPrio);
+                if (IsEmpty())
+                    _lowestPrio = -1;
+                else if(oldPrio == _lowestPrio)
+                    _lowestPrio = _storage.First().Key;
             }
-            return pq;
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _storage.Values.SelectMany(v => v).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
     }
 }

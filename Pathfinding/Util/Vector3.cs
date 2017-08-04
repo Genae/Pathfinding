@@ -23,13 +23,13 @@ namespace Pathfinding
                 switch (index)
                 {
                     case 0:
-                        result = this.x;
+                        result = x;
                         break;
                     case 1:
-                        result = this.y;
+                        result = y;
                         break;
                     case 2:
-                        result = this.z;
+                        result = z;
                         break;
                     default:
                         throw new IndexOutOfRangeException("Invalid Vector3 index!");
@@ -41,13 +41,13 @@ namespace Pathfinding
                 switch (index)
                 {
                     case 0:
-                        this.x = value;
+                        x = value;
                         break;
                     case 1:
-                        this.y = value;
+                        y = value;
                         break;
                     case 2:
-                        this.z = value;
+                        z = value;
                         break;
                     default:
                         throw new IndexOutOfRangeException("Invalid Vector3 index!");
@@ -59,7 +59,7 @@ namespace Pathfinding
         {
             get
             {
-                return Vector3.Normalize(this);
+                return Normalize(this);
             }
         }
 
@@ -67,7 +67,7 @@ namespace Pathfinding
         {
             get
             {
-                return (float) Math.Sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+                return (float) Math.Sqrt(x * x + y * y + z * z);
             }
         }
 
@@ -75,7 +75,7 @@ namespace Pathfinding
         {
             get
             {
-                return this.x * this.x + this.y * this.y + this.z * this.z;
+                return x * x + y * y + z * z;
             }
         }
 
@@ -163,63 +163,14 @@ namespace Pathfinding
         {
             this.x = x;
             this.y = y;
-            this.z = 0f;
+            z = 0f;
         }
         
-        public static Vector3 Slerp(Vector3 a, Vector3 b, float t)
-        {
-            Vector3 result;
-            Vector3.INTERNAL_CALL_Slerp(ref a, ref b, t, out result);
-            return result;
-        }
-        private static extern void INTERNAL_CALL_Slerp(ref Vector3 a, ref Vector3 b, float t, out Vector3 value);
-
-        public static Vector3 SlerpUnclamped(Vector3 a, Vector3 b, float t)
-        {
-            Vector3 result;
-            Vector3.INTERNAL_CALL_SlerpUnclamped(ref a, ref b, t, out result);
-            return result;
-        }
-        
-        private static extern void INTERNAL_CALL_SlerpUnclamped(ref Vector3 a, ref Vector3 b, float t, out Vector3 value);
-
-        private static void Internal_OrthoNormalize2(ref Vector3 a, ref Vector3 b)
-        {
-            Vector3.INTERNAL_CALL_Internal_OrthoNormalize2(ref a, ref b);
-        }
-
-        private static extern void INTERNAL_CALL_Internal_OrthoNormalize2(ref Vector3 a, ref Vector3 b);
-
-        private static void Internal_OrthoNormalize3(ref Vector3 a, ref Vector3 b, ref Vector3 c)
-        {
-            Vector3.INTERNAL_CALL_Internal_OrthoNormalize3(ref a, ref b, ref c);
-        }
-        
-        private static extern void INTERNAL_CALL_Internal_OrthoNormalize3(ref Vector3 a, ref Vector3 b, ref Vector3 c);
-
-        public static void OrthoNormalize(ref Vector3 normal, ref Vector3 tangent)
-        {
-            Vector3.Internal_OrthoNormalize2(ref normal, ref tangent);
-        }
-
-        public static void OrthoNormalize(ref Vector3 normal, ref Vector3 tangent, ref Vector3 binormal)
-        {
-            Vector3.Internal_OrthoNormalize3(ref normal, ref tangent, ref binormal);
-        }
-
-        public static Vector3 RotateTowards(Vector3 current, Vector3 target, float maxRadiansDelta, float maxMagnitudeDelta)
-        {
-            Vector3 result;
-            Vector3.INTERNAL_CALL_RotateTowards(ref current, ref target, maxRadiansDelta, maxMagnitudeDelta, out result);
-            return result;
-        }
-        
-        private static extern void INTERNAL_CALL_RotateTowards(ref Vector3 current, ref Vector3 target, float maxRadiansDelta, float maxMagnitudeDelta, out Vector3 value);
 
         [Obsolete("Use Vector3.ProjectOnPlane instead.")]
         public static Vector3 Exclude(Vector3 excludeThis, Vector3 fromThat)
         {
-            return fromThat - Vector3.Project(fromThat, excludeThis);
+            return fromThat - Project(fromThat, excludeThis);
         }
 
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
@@ -258,12 +209,12 @@ namespace Pathfinding
             Vector3 vector = current - target;
             Vector3 vector2 = target;
             float maxLength = maxSpeed * smoothTime;
-            vector = Vector3.ClampMagnitude(vector, maxLength);
+            vector = ClampMagnitude(vector, maxLength);
             target = current - vector;
             Vector3 vector3 = (currentVelocity + num * vector) * deltaTime;
             currentVelocity = (currentVelocity - num * vector3) * d;
             Vector3 vector4 = target + (vector + vector3) * d;
-            if (Vector3.Dot(vector2 - current, vector4 - vector2) > 0f)
+            if (Dot(vector2 - current, vector4 - vector2) > 0f)
             {
                 vector4 = vector2;
                 currentVelocity = (vector4 - vector2) / deltaTime;
@@ -273,9 +224,9 @@ namespace Pathfinding
 
         public void Set(float new_x, float new_y, float new_z)
         {
-            this.x = new_x;
-            this.y = new_y;
-            this.z = new_z;
+            x = new_x;
+            y = new_y;
+            z = new_z;
         }
 
         public static Vector3 Scale(Vector3 a, Vector3 b)
@@ -285,9 +236,9 @@ namespace Pathfinding
 
         public void Scale(Vector3 scale)
         {
-            this.x *= scale.x;
-            this.y *= scale.y;
-            this.z *= scale.z;
+            x *= scale.x;
+            y *= scale.y;
+            z *= scale.z;
         }
 
         public static Vector3 Cross(Vector3 lhs, Vector3 rhs)
@@ -297,7 +248,7 @@ namespace Pathfinding
 
         public override int GetHashCode()
         {
-            return this.x.GetHashCode() ^ this.y.GetHashCode() << 2 ^ this.z.GetHashCode() >> 2;
+            return x.GetHashCode() ^ y.GetHashCode() << 2 ^ z.GetHashCode() >> 2;
         }
 
         public override bool Equals(object other)
@@ -310,19 +261,19 @@ namespace Pathfinding
             else
             {
                 Vector3 vector = (Vector3)other;
-                result = (this.x.Equals(vector.x) && this.y.Equals(vector.y) && this.z.Equals(vector.z));
+                result = (x.Equals(vector.x) && y.Equals(vector.y) && z.Equals(vector.z));
             }
             return result;
         }
 
         public static Vector3 Reflect(Vector3 inDirection, Vector3 inNormal)
         {
-            return -2f * Vector3.Dot(inNormal, inDirection) * inNormal + inDirection;
+            return -2f * Dot(inNormal, inDirection) * inNormal + inDirection;
         }
 
         public static Vector3 Normalize(Vector3 value)
         {
-            float num = Vector3.Magnitude(value);
+            float num = Magnitude(value);
             Vector3 result;
             if (num > 1E-05f)
             {
@@ -330,21 +281,21 @@ namespace Pathfinding
             }
             else
             {
-                result = Vector3.zero;
+                result = zero;
             }
             return result;
         }
 
         public void Normalize()
         {
-            float num = Vector3.Magnitude(this);
+            float num = Magnitude(this);
             if (num > 1E-05f)
             {
                 this /= num;
             }
             else
             {
-                this = Vector3.zero;
+                this = zero;
             }
         }
 
@@ -355,27 +306,27 @@ namespace Pathfinding
 
         public static Vector3 Project(Vector3 vector, Vector3 onNormal)
         {
-            float num = Vector3.Dot(onNormal, onNormal);
+            float num = Dot(onNormal, onNormal);
             Vector3 result;
             if (num < Mathf.Epsilon)
             {
-                result = Vector3.zero;
+                result = zero;
             }
             else
             {
-                result = onNormal * Vector3.Dot(vector, onNormal) / num;
+                result = onNormal * Dot(vector, onNormal) / num;
             }
             return result;
         }
 
         public static Vector3 ProjectOnPlane(Vector3 vector, Vector3 planeNormal)
         {
-            return vector - Vector3.Project(vector, planeNormal);
+            return vector - Project(vector, planeNormal);
         }
 
         public static float Angle(Vector3 from, Vector3 to)
         {
-            return Mathf.Acos(Mathf.Clamp(Vector3.Dot(from.normalized, to.normalized), -1f, 1f)) * 57.29578f;
+            return Mathf.Acos(Mathf.Clamp(Dot(from.normalized, to.normalized), -1f, 1f)) * 57.29578f;
         }
 
         public static float Distance(Vector3 a, Vector3 b)
@@ -450,7 +401,7 @@ namespace Pathfinding
 
         public static bool operator ==(Vector3 lhs, Vector3 rhs)
         {
-            return Vector3.SqrMagnitude(lhs - rhs) < 9.99999944E-11f;
+            return SqrMagnitude(lhs - rhs) < 9.99999944E-11f;
         }
 
         public static bool operator !=(Vector3 lhs, Vector3 rhs)
@@ -462,9 +413,9 @@ namespace Pathfinding
         {
             return string.Format("({0:F1}, {1:F1}, {2:F1})", new object[]
             {
-                this.x,
-                this.y,
-                this.z
+                x,
+                y,
+                z
             });
         }
 
@@ -472,16 +423,16 @@ namespace Pathfinding
         {
             return string.Format("({0}, {1}, {2})", new object[]
             {
-                this.x.ToString(format),
-                this.y.ToString(format),
-                this.z.ToString(format)
+                x.ToString(format),
+                y.ToString(format),
+                z.ToString(format)
             });
         }
 
         [Obsolete("Use Vector3.Angle instead. AngleBetween uses radians instead of degrees and was deprecated for this reason")]
         public static float AngleBetween(Vector3 from, Vector3 to)
         {
-            return Mathf.Acos(Mathf.Clamp(Vector3.Dot(from.normalized, to.normalized), -1f, 1f));
+            return Mathf.Acos(Mathf.Clamp(Dot(from.normalized, to.normalized), -1f, 1f));
         }
     }
 
@@ -490,8 +441,8 @@ namespace Pathfinding
         public static T Clamp<T>(T val, T min, T max) where T : IComparable<T>
         {
             if (val.CompareTo(min) < 0) return min;
-            else if (val.CompareTo(max) > 0) return max;
-            else return val;
+            if (val.CompareTo(max) > 0) return max;
+            return val;
         }
 
         public static float Acos(float f)

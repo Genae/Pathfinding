@@ -5,7 +5,7 @@ namespace Pathfinding.Util
 {
     public abstract class Promise
     {
-        protected Task Thread;
+        public Task Task;
         private bool _finished;
         public bool Finished
         {
@@ -27,7 +27,7 @@ namespace Pathfinding.Util
      * UNITY 3D Implementations
     public abstract class Promise
     {
-        protected Thread Thread;
+        protected Task Task;
         private bool _finished;
         public bool Finished
         {
