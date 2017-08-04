@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +16,21 @@ namespace Pathfinding
             _grid[xPos, yPos, zPos] = new T0Node(new Vector3I(xPos, yPos, zPos));
             ConnectNeighbours(xPos, yPos, zPos);
         }
+        
+        public Vector3I GetSize()
+        {
+            return _grid.GetSize();
+        }
+
+        public Node GetNode(Vector3I from)
+        {
+            return _grid[from.x, from.y, from.z];
+        }
+
+        public IEnumerable<Node> GetT1Nodes()
+        {
+            return _gridT1;
+        }
 
         public void ConnectNeighbours(int xPos, int yPos, int zPos)
         {
@@ -31,7 +46,7 @@ namespace Pathfinding
                         if (dX == 0 && dY == 0 && dZ == 0)
                             continue;
                         if (_grid[xPos + dX, yPos + dY, zPos + dZ] != null)
-                            _grid[xPos + dX, yPos + dY, zPos + dZ].ConnectTo(node, Mathf.Sqrt(dX*dX+dY*dY+dZ*dZ));
+                            (_grid[xPos + dX, yPos + dY, zPos + dZ] as T0Node).ConnectTo(node, Mathf.Sqrt(dX*dX+dY*dY+dZ*dZ));
 
                     }
                 }
@@ -44,27 +59,7 @@ namespace Pathfinding
             AddSupernodeGrid(gridSize, size);
             FillSupernodeHoles(gridSize, size);
         }
-
-        private void FillSupernodeHoles(int gridSize, Vector3I size)
-        {
-            for (var dX = 0; dX <= size[0]; dX++)
-            {
-                for (var dY = 0; dY <= size[1]; dY++)
-                {
-                    for (var dZ = 0; dZ <= size[2]; dZ++)
-                    {
-                        var node = _grid[dX, dY, dZ];
-                        if (node == null || node.SuperNodes.Count > 0)
-                            continue;
-                        var supernode = new SuperNode(node.Position);
-                        _gridT1[dX, dY, dZ] = supernode;
-
-                        Floodfill.Fill(this, supernode.Position, gridSize, supernode);
-                    }
-                }
-            }
-        }
-
+        
         private void AddSupernodeGrid(int gridSize, Vector3I size)
         { 
             for (var dX = Math.Min(gridSize / 2, size[0]); dX <= size[0]; dX += gridSize)
@@ -85,19 +80,24 @@ namespace Pathfinding
             }
         }
 
-        public Vector3I GetSize()
+        private void FillSupernodeHoles(int gridSize, Vector3I size)
         {
-            return _grid.GetSize();
-        }
+            for (var dX = 0; dX <= size[0]; dX++)
+            {
+                for (var dY = 0; dY <= size[1]; dY++)
+                {
+                    for (var dZ = 0; dZ <= size[2]; dZ++)
+                    {
+                        var node = _grid[dX, dY, dZ];
+                        if (node == null || node.SuperNodes.Count > 0)
+                            continue;
+                        var supernode = new SuperNode(node.Position);
+                        _gridT1[dX, dY, dZ] = supernode;
 
-        public Node GetNode(Vector3I from)
-        {
-            return _grid[from.x, from.y, from.z];
-        }
-
-        public IEnumerable<Node> GetT1Nodes()
-        {
-            return _gridT1;
+                        Floodfill.Fill(this, supernode.Position, gridSize, supernode);
+                    }
+                }
+            }
         }
     }
     
@@ -124,7 +124,13 @@ namespace Pathfinding
             {
                 superNode.ChildNodes.Add(this);
             }
-            SuperNodes[superNode] = new SuperNodeConnection(this, from, superNode, dist);
+            SuperNodes[superNode] = new SuperNodeConnection(from, superNode, dist);
+            foreach (var snode in SuperNodes.Keys)
+            {
+                if (snode == superNode)
+                    continue;
+                snode.ConnectTo(superNode, dist, from);
+            }
         }
 
         public Node GetClosestSuperNode()
@@ -132,9 +138,7 @@ namespace Pathfinding
             var min = SuperNodes.Min(kv => kv.Value.Length);
             return SuperNodes.FirstOrDefault(n => Equals(n.Value.Length, min)).Key;
         }
-
-        public abstract void ConnectTo(Node node, float dist);
-
+        
         public abstract List<Edge> GetNeighbours();
     }
 
@@ -147,10 +151,10 @@ namespace Pathfinding
         {
         }
 
-        public override void ConnectTo(Node node, float dist)
+        public void ConnectTo(Node node, float dist)
         {
-            _neighbours.Add(new Edge(this, node, dist));
-            node.GetNeighbours().Add(new Edge(node, this, dist));
+            _neighbours.Add(new Edge(node, dist));
+            node.GetNeighbours().Add(new Edge(this, dist));
         }
 
         public override List<Edge> GetNeighbours()
@@ -162,30 +166,37 @@ namespace Pathfinding
     public class SuperNode : Node
     {
         public List<Node> ChildNodes = new List<Node>();
+        private readonly Dictionary<SuperNode, Edge> _neigbours = new Dictionary<SuperNode, Edge>(); 
+
         public SuperNode(Vector3I position) : base(position)
         {
         }
 
-        public override void ConnectTo(Node node, float dist)
+        public bool ConnectTo(SuperNode node, float dist, Node via)
         {
-            throw new NotImplementedException();
+            var old = (SuperNodeEdge)_neigbours[node];
+            if (old == null || old.Length >= dist)
+            {
+                _neigbours[node] = new SuperNodeEdge(node, dist, via);
+                node._neigbours[this] = new SuperNodeEdge(this, dist, via);
+                return true;
+            }
+            return false;
         }
-
+        
         public override List<Edge> GetNeighbours()
         {
-            throw new NotImplementedException();
+            return _neigbours.Values.ToList();
         }
     }
 
     public class Edge
     {
         public Node To;
-        public Node From;
         public float Length;
 
-        public Edge(Node from, Node to, float length)
+        public Edge(Node to, float length)
         {
-            From = from;
             To = to;
             Length = length;
         }
@@ -195,9 +206,18 @@ namespace Pathfinding
     {
         public SuperNode SuperNode;
 
-        public SuperNodeConnection(Node from, Node to, SuperNode superNode, float length) : base(from, to, length)
+        public SuperNodeConnection(Node to, SuperNode superNode, float length) : base(to, length)
         {
             SuperNode = superNode;
+        }
+    }
+
+    public class SuperNodeEdge : Edge
+    {
+        public Node ConnectorNode;
+        public SuperNodeEdge(Node to, float length, Node via) : base(to, length)
+        {
+            ConnectorNode = via;
         }
     }
 
