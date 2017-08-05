@@ -16,7 +16,7 @@ namespace Pathfinding.Pathfinder
             Prev = prev;
             if (prev == null)
             {
-                GScore = 0;
+                GScore = cost;
             }
             else
             {

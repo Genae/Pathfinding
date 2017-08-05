@@ -38,6 +38,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Agents\MovingAgent.cs" />
     <Compile Include="Graphs\Edge.cs" />
     <Compile Include="Graphs\Grid3D.cs" />
     <Compile Include="Graphs\Node.cs" />
@@ -57,8 +58,6 @@
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Agents\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

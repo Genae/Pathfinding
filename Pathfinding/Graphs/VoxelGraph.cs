@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Pathfinding.Pathfinder;
 using Pathfinding.Utils;
 
 namespace Pathfinding.Graphs
@@ -56,6 +57,7 @@ namespace Pathfinding.Graphs
             var size = GetSize();
             AddSupernodeGrid(gridSize, size);
             FillSupernodeHoles(gridSize, size);
+            EnsureNeighbourCoverage(gridSize);
         }
         
         private void AddSupernodeGrid(int gridSize, Vector3I size)
@@ -72,7 +74,7 @@ namespace Pathfinding.Graphs
                         var supernode = new SuperNode(node.Position);
                         _gridT1[dX, dY, dZ] = supernode;
 
-                        Dijkstra.Fill(this, supernode.Position, gridSize, supernode);
+                        Dijkstra.Fill(GetNode(supernode.Position), gridSize, supernode);
                     }
                 }
             }
@@ -92,9 +94,18 @@ namespace Pathfinding.Graphs
                         var supernode = new SuperNode(node.Position);
                         _gridT1[dX, dY, dZ] = supernode;
 
-                        Dijkstra.Fill(this, supernode.Position, gridSize, supernode);
+                        Dijkstra.Fill(GetNode(supernode.Position), gridSize, supernode);
                     }
                 }
+            }
+        }
+
+
+        private void EnsureNeighbourCoverage(int gridSize)
+        {
+            foreach (var superNode in _gridT1)
+            {
+                Dijkstra.FillNeigbours(superNode, gridSize);
             }
         }
     }

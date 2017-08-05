@@ -9,15 +9,20 @@ namespace Pathfinding.Pathfinder
     public class Path : Promise
     {
         public List<Node> Nodes;
+        public Node Start;
+        public Node Target;
         public float Length;
         public bool IsT0;
 
-        protected Path(List<Node> nodes, float length, bool t0)
+        protected Path(List<Node> nodes, float length, bool t0, Node start, Node target)
         {
             Nodes = nodes;
             Length = length;
             IsT0 = t0;
+            Start = start;
+            Target = target;
         }
+
 
         public Node GetNode(int i)
         {
@@ -28,9 +33,9 @@ namespace Pathfinding.Pathfinder
             return Nodes[i];
         }
         
-        public static Path Calculate(VoxelGraph graph, Vector3I from, Vector3I to)
+        public static Path Calculate(VoxelGraph graph, Vector3I from, Vector3I to, bool forceOptimal = false)
         {
-            if ((from - to).magnitude < 200)
+            if ((from - to).magnitude < 200 || forceOptimal)
             {
                 return CalculateLowlevelPath(graph, from, to);
             }
@@ -39,10 +44,12 @@ namespace Pathfinding.Pathfinder
 
         private static Path CalculateHighlevelPath(VoxelGraph graph, Vector3I @from, Vector3I to)
         {
-            var path = new Path(null, 0, false);
+            var start = graph.GetNode(from);
+            var target = graph.GetNode(to);
+            var path = new Path(null, 0, false, start, target);
             path.Task = new Task(() =>
             {
-                path = AStar.GetPath(graph.GetNode(from).SuperNodes.ToDictionary(n => n.Key as Node, n => n.Value.Length), graph.GetNode(to).GetClosestSuperNode(), path);
+                path = AStar.GetPath(start.SuperNodes.ToDictionary(n => n.Key as Node, n => n.Value.Length), target.GetClosestSuperNode(), path);
                 path.Finished = true;
             });
             path.Task.Start();
@@ -51,10 +58,12 @@ namespace Pathfinding.Pathfinder
 
         private static Path CalculateLowlevelPath(VoxelGraph graph, Vector3I from, Vector3I to)
         {
-            var path = new Path(null, 0, true);
+            var start = graph.GetNode(from);
+            var target = graph.GetNode(to);
+            var path = new Path(null, 0, true, start, target);
             path.Task = new Task(() =>
             {
-                path = AStar.GetPath(graph.GetNode(from), graph.GetNode(to), path);
+                path = AStar.GetPath(start, target, path);
                 path.Finished = true;
             });
             path.Task.Start();

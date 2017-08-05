@@ -14,7 +14,7 @@ namespace Pathfinding.Graphs
             Position = position;
         }
 
-        public void ConnectSuperNode(Node from, SuperNode superNode, float dist)
+        public void ConnectSuperNode(Node from, SuperNode superNode, float dist, bool directChild = true)
         {
             if (SuperNodes.ContainsKey(superNode))
             {
@@ -23,14 +23,18 @@ namespace Pathfinding.Graphs
             }
             else
             {
-                superNode.ChildNodes.Add(this);
+                if(directChild)
+                    superNode.ChildNodes.Add(this);
             }
             SuperNodes[superNode] = new SuperNodeConnection(from, superNode, dist);
-            foreach (var snode in SuperNodes.Keys)
+            if (directChild)
             {
-                if (snode == superNode)
-                    continue;
-                snode.ConnectTo(superNode, dist, from);
+                foreach (var snode in SuperNodes.Keys)
+                {
+                    if (snode == superNode)
+                        continue;
+                    snode.ConnectTo(superNode, dist, from);
+                }
             }
         }
 

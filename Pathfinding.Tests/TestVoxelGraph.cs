@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using Pathfinding.Agents;
 using Xunit;
 using Pathfinding.Graphs;
 using Pathfinding.Utils;
@@ -48,10 +50,16 @@ namespace Pathfinding.Tests
         {
             var img = LoadImage("Images/MAZE_40x20_DFS_no_deadends.png");
             var graph = GetGraphFromImage(img);
-            graph.AddTier1Nodes(30);
+            graph.AddTier1Nodes(20);
             var path = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479));
             path.Task.Wait();
-            DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");
+            var agent = new MovingAgent();
+            var nodes = agent.FollowPath(path, graph);
+            DrawPathToImage(img, nodes, Color.Red);
+            var pathO = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479), true);
+            pathO.Task.Wait();
+            DrawPathToImage(img, pathO.Nodes, Color.Blue);
+            SaveImage(img, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");
             Assert.True(path.Finished);
         }
 
@@ -60,11 +68,17 @@ namespace Pathfinding.Tests
         {
             var img = LoadImage("Images/maze_by_pannekaka.jpg");
             var graph = GetGraphFromImage(img);
-            graph.AddTier1Nodes(30);
-            DrawNodesToImage(img, graph);
+            graph.AddTier1Nodes(20);
+            //DrawNodesToImage(img, graph);
             var path = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25));
             path.Task.Wait();
-            DrawPathToImage(img, path, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
+            var agent = new MovingAgent();
+            var nodes = agent.FollowPath(path, graph);
+            DrawPathToImage(img, nodes, Color.Red);
+            var pathO = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25), true);
+            pathO.Task.Wait();
+            DrawPathToImage(img, pathO.Nodes, Color.Blue);
+            SaveImage(img, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
             Assert.True(path.Finished);
         }
         
@@ -98,17 +112,12 @@ namespace Pathfinding.Tests
             return graph;
         }
 
-        private void DrawPathToImage(Bitmap img, Path path, string output)
+        private void DrawPathToImage(Bitmap img, IEnumerable<Node> nodes, Color c)
         {
-            foreach (var pathNode in path.Nodes)
+            foreach (var pathNode in nodes)
             {
-                img.SetPixel((int)pathNode.Position.x, (int)pathNode.Position.z, Color.Red);
+                img.SetPixel((int)pathNode.Position.x, (int)pathNode.Position.z, c);
             }
-            if (!System.IO.Directory.GetParent(output).Exists)
-            {
-                System.IO.Directory.GetParent(output).Create();
-            }
-            img.Save(output);
         }
 
         private void DrawNodesToImage(Bitmap img, VoxelGraph graph)
@@ -125,6 +134,15 @@ namespace Pathfinding.Tests
                         img.SetPixel(x, y, colors[node.GetClosestSuperNode()]);
                 }
             }
+        }
+
+        private void SaveImage(Bitmap img, string output)
+        {
+            if (!System.IO.Directory.GetParent(output).Exists)
+            {
+                System.IO.Directory.GetParent(output).Create();
+            }
+            img.Save(output);
         }
         #endregion
     }
