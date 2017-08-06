@@ -7,16 +7,17 @@ namespace Pathfinding.Agents
 {
     public class MovingAgent
     {
-        public List<Node> FollowPath(Path path, VoxelGraph graph)
+        public Path FollowPath(Path path, VoxelGraph graph)
         {
             if (path.IsT0)
             {
-                return path.Nodes;
+                return path;
             }
             var lastSuper = (SuperNode)path.Nodes.Last();
             var pos = 0;
             var curNode = path.Start;
             var visited = new List<Node>();
+            float length = 0;
             while (!curNode.SuperNodes.ContainsKey(lastSuper))
             {
                 visited.Add(curNode);
@@ -24,7 +25,9 @@ namespace Pathfinding.Agents
                 {
                     if (curNode.SuperNodes.ContainsKey((SuperNode)path.Nodes[pos + i]))
                     {
-                        curNode = curNode.SuperNodes[(SuperNode)path.Nodes[pos + i]].To;
+                        var nextStep = curNode.SuperNodes[(SuperNode)path.Nodes[pos + i]];
+                        curNode = nextStep.To;
+                        length += nextStep.Length - (nextStep.To?.SuperNodes[(SuperNode)path.Nodes[pos + i]]?.Length ?? 0);
                         pos += i;
                         break;
                     }                    
@@ -34,7 +37,12 @@ namespace Pathfinding.Agents
             var finalPath = Path.Calculate(graph, curNode.Position, path.Target.Position);
             finalPath.Task.Wait();
             visited.AddRange(finalPath.Nodes);
-            return visited;
+            var walkedPath = new Path(path.Start, path.Target)
+            {
+                Nodes = visited,
+                Length = length + finalPath.Length
+            };
+            return walkedPath;
         }
     }
 }

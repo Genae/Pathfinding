@@ -53,9 +53,8 @@ namespace Pathfinding.Tests
             graph.AddTier1Nodes(20);
             var path = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479));
             path.Task.Wait();
-            var agent = new MovingAgent();
-            var nodes = agent.FollowPath(path, graph);
-            DrawPathToImage(img, nodes, Color.Red);
+            var exactPath = (path as HighLevelPath)?.ExactPath ?? path;
+            DrawPathToImage(img, exactPath.Nodes, Color.Red);
             var pathO = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479), true);
             pathO.Task.Wait();
             DrawPathToImage(img, pathO.Nodes, Color.Blue);
@@ -72,9 +71,8 @@ namespace Pathfinding.Tests
             //DrawNodesToImage(img, graph);
             var path = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25));
             path.Task.Wait();
-            var agent = new MovingAgent();
-            var nodes = agent.FollowPath(path, graph);
-            DrawPathToImage(img, nodes, Color.Red);
+            var exactPath = (path as HighLevelPath)?.ExactPath ?? path;
+            DrawPathToImage(img, exactPath.Nodes, Color.Red);
             var pathO = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25), true);
             pathO.Task.Wait();
             DrawPathToImage(img, pathO.Nodes, Color.Blue);
