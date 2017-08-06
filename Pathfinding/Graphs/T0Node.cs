@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Pathfinding.Utils;
 
 namespace Pathfinding.Graphs
@@ -20,6 +21,13 @@ namespace Pathfinding.Graphs
         public override List<Edge> GetNeighbours()
         {
             return _neighbours;
+        }
+
+        protected override void RemoveNeighbour(Node node)
+        {
+            var edge = _neighbours.FirstOrDefault(e => e.To.Equals(node));
+            if(edge != null)
+                _neighbours.Remove(edge);
         }
     }
 }

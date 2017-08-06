@@ -73,5 +73,19 @@ namespace Pathfinding.Graphs
         {
             return GetEnumerator();
         }
+
+        public void Remove(Vector3I position)
+        {
+            _size = default(Vector3I);
+            if (!_nodes.ContainsKey(position.x))
+                return;
+            if (!_nodes[position.x].ContainsKey(position.y))
+                return;
+            _nodes[position.x][position.y].Remove(position.z);
+            if (_nodes[position.x][position.y].Count == 0)
+                _nodes[position.x].Remove(position.y);
+            if (_nodes[position.x].Count == 0)
+                _nodes.Remove(position.x);
+        }
     }
 }

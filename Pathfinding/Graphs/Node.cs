@@ -47,5 +47,15 @@ namespace Pathfinding.Graphs
         }
         
         public abstract List<Edge> GetNeighbours();
+        protected abstract void RemoveNeighbour(Node node);
+
+        public void Delete()
+        {
+            foreach (var neighbour in GetNeighbours())
+            {
+                neighbour.To.RemoveNeighbour(this);
+            }
+        }
+
     }
 }

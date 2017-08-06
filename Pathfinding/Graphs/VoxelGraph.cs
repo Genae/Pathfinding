@@ -45,11 +45,17 @@ namespace Pathfinding.Graphs
                         if (dX == 0 && dY == 0 && dZ == 0)
                             continue;
                         if (_grid[xPos + dX, yPos + dY, zPos + dZ] != null)
-                            (_grid[xPos + dX, yPos + dY, zPos + dZ] as T0Node).ConnectTo(node, Mathf.Sqrt(dX*dX+dY*dY+dZ*dZ));
+                            (_grid[xPos + dX, yPos + dY, zPos + dZ] as T0Node)?.ConnectTo(node, Mathf.Sqrt(dX*dX+dY*dY+dZ*dZ));
 
                     }
                 }
             }
+        }
+        public void RemoveNode(Vector3I vector3I)
+        {
+            var node = _grid.Get(vector3I.x, vector3I.y, vector3I.z);
+            node.Delete();
+            _grid.Remove(vector3I);
         }
 
         public void AddTier1Nodes(int gridSize)

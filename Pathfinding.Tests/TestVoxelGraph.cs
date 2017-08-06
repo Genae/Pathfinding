@@ -81,7 +81,44 @@ namespace Pathfinding.Tests
             SaveImage(img, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
             Assert.True(path.Finished);
         }
-        
+
+        [Fact]
+        public void RemovingNodesDoesntBreakTheGraph()
+        {
+            var graph = new VoxelGraph();
+            for (var i = 0; i < 200; i++)
+            {
+                for (var j = 0; j < 200; j++)
+                {
+                    graph.AddNode(i, 0, j);
+                }
+            }
+            graph.AddTier1Nodes(10);
+            graph.RemoveNode(new Vector3I(1, 0, 0));
+            var path = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(199, 0, 199));
+            path.Task.Wait();
+            Assert.True(path.Finished);
+            Assert.Equal(Math.Sqrt(2)*199, path.Length, 2);
+        }
+
+        [Fact]
+        public void RemovingNodesDoesActuallyRemoveThem()
+        {
+            var graph = new VoxelGraph();
+            for (var i = 0; i < 10; i++)
+            {
+                for (var j = 0; j < 10; j++)
+                {
+                    graph.AddNode(i, 0, j);
+                }
+            }
+            graph.AddTier1Nodes(10);
+            graph.RemoveNode(new Vector3I(1, 0, 0));
+            var path = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(2, 0, 0));
+            path.Task.Wait();
+            Assert.True(path.Finished);
+            Assert.Equal(path.Length, Math.Sqrt(2) * 2, 2);
+        }
 
         #region util
         private Bitmap LoadImage(string path)
