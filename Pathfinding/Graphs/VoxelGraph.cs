@@ -15,8 +15,14 @@ namespace Pathfinding.Graphs
 
         public void AddNode(int xPos, int yPos, int zPos)
         {
-            _grid[xPos, yPos, zPos] = new T0Node(new Vector3I(xPos, yPos, zPos));
+            var node = new T0Node(new Vector3I(xPos, yPos, zPos));
+            _grid[xPos, yPos, zPos] = node;
             ConnectNeighbours(xPos, yPos, zPos);
+            if (_gridSize > 0)
+            {
+                node.ConnectToSupernodes(this);
+            }
+            ProcessDirtyNodes();
         }
 
         public void MarkDirty(Node node)

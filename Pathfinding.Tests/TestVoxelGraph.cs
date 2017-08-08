@@ -10,10 +10,10 @@ using Pathfinding.Pathfinder;
 
 namespace Pathfinding.Tests
 {
-    public class TestVoxelGraph
+    public class TestVoxelGraph : TestBase
     {
         [Fact]
-        public void NodesAddedConnectCorrectly()
+        public void NodesAddedConnectCorrectlyT0()
         {
             var graph = new VoxelGraph();
             graph.AddNode(0, 0, 0);
@@ -32,7 +32,7 @@ namespace Pathfinding.Tests
         }
 
         [Fact]
-        public void GraphCanSupportAStar()
+        public void GraphCanSupportAStarT0()
         {
             var graph = new VoxelGraph();
             graph.AddNode(0, 0, 0);
@@ -44,42 +44,7 @@ namespace Pathfinding.Tests
             path.Task.Wait();
             Assert.True(path.Finished);
         }
-
-        [Fact]
-        public void TestAStarMaceNoDeadEnds()
-        {
-            var img = LoadImage("Images/MAZE_40x20_DFS_no_deadends.png");
-            var graph = GetGraphFromImage(img);
-            graph.AddTier1Nodes(20);
-            var path = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479));
-            path.Task.Wait();
-            var exactPath = (path as HighLevelPath)?.ExactPath ?? path;
-            DrawPathToImage(img, exactPath.Nodes, Color.Red);
-            var pathO = Path.Calculate(graph, new Vector3I(12, 0, 12), new Vector3I(959, 0, 479), true);
-            pathO.Task.Wait();
-            DrawPathToImage(img, pathO.Nodes, Color.Blue);
-            SaveImage(img, @"C:\Test\Pathfinding\maceNoDeadEnds.bmp");
-            Assert.True(path.Finished);
-        }
-
-        [Fact]
-        public void TestAStarMaceWithDeadEnds()
-        {
-            var img = LoadImage("Images/maze_by_pannekaka.jpg");
-            var graph = GetGraphFromImage(img);
-            graph.AddTier1Nodes(20);
-            //DrawNodesToImage(img, graph);
-            var path = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25));
-            path.Task.Wait();
-            var exactPath = (path as HighLevelPath)?.ExactPath ?? path;
-            DrawPathToImage(img, exactPath.Nodes, Color.Red);
-            var pathO = Path.Calculate(graph, new Vector3I(20, 0, 1185), new Vector3I(1563, 0, 25), true);
-            pathO.Task.Wait();
-            DrawPathToImage(img, pathO.Nodes, Color.Blue);
-            SaveImage(img, @"C:\Test\Pathfinding\maceWithDeadEnds.bmp");
-            Assert.True(path.Finished);
-        }
-
+        
         [Fact]
         public void RemovingNodesDoesntBreakTheGraph()
         {
@@ -97,6 +62,31 @@ namespace Pathfinding.Tests
             path.Task.Wait();
             Assert.True(path.Finished);
             Assert.Equal(Math.Sqrt(2)*199, path.Length, 2);
+        }
+
+
+        [Fact]
+        public void NodesAddedConnectCorrectlyT1()
+        {
+            var graph = new VoxelGraph();
+            for (var i = 1; i <201; i++)
+            {
+                for (var j = 0; j < 200; j++)
+                {
+                    if (j == i + 1)
+                        continue;
+                    graph.AddNode(i, 0, j);
+                }
+            }
+            graph.AddTier1Nodes(10);
+            for (var j = 0; j < 200; j++)
+            {
+                graph.AddNode(j+1, 0, j);
+            }
+            var path = Path.Calculate(graph, new Vector3I(1, 0, 0), new Vector3I(200, 0, 199));
+            path.Task.Wait();
+            Assert.True(path.Finished);
+            Assert.Equal(Math.Sqrt(2) * 199, path.Length, 2);
         }
 
         [Fact]
@@ -212,9 +202,14 @@ namespace Pathfinding.Tests
             Assert.Contains(superNode2, graph.GetNode(new Vector3I(5, 10, 0)).SuperNodes.Keys.ToList());
 
         }
+    }
+
+    public class TestBase
+    {
 
         #region util
-        private Bitmap LoadImage(string path)
+
+        protected Bitmap LoadImage(string path)
         {
             var src = new Bitmap(Environment.CurrentDirectory + "/" + path);
             var newBmp = new Bitmap(src.Width, src.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -226,7 +221,7 @@ namespace Pathfinding.Tests
             return newBmp;
         }
 
-        private VoxelGraph GetGraphFromImage(Bitmap img)
+        protected VoxelGraph GetGraphFromImage(Bitmap img)
         {
             var graph = new VoxelGraph();
             for (var x = 0; x < img.Width; x++)
@@ -242,7 +237,7 @@ namespace Pathfinding.Tests
             return graph;
         }
 
-        private void DrawPathToImage(Bitmap img, IEnumerable<Node> nodes, Color c)
+        protected void DrawPathToImage(Bitmap img, IEnumerable<Node> nodes, Color c)
         {
             foreach (var pathNode in nodes)
             {
@@ -260,13 +255,13 @@ namespace Pathfinding.Tests
                 for (var y = 0; y < img.Height; y++)
                 {
                     var node = graph.GetNode(new Vector3I(x, 0, y));
-                    if(node != null && node.SuperNodes.Count > 0)
+                    if (node != null && node.SuperNodes.Count > 0)
                         img.SetPixel(x, y, colors[node.GetClosestSuperNode()]);
                 }
             }
         }
 
-        private void SaveImage(Bitmap img, string output)
+        protected void SaveImage(Bitmap img, string output)
         {
             if (!System.IO.Directory.GetParent(output).Exists)
             {

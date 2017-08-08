@@ -67,11 +67,27 @@ namespace Pathfinding.Graphs
                 }
             }
         }
+        
+        public void ConnectToSupernodes(VoxelGraph graph)
+        {
+            foreach (var neighbour in GetNeighbours())
+            {
+                foreach (var superNodeConnection in neighbour.To.SuperNodes.ToList())
+                {
+                    if (!SuperNodes.ContainsKey(superNodeConnection.Key))
+                        RecalculateSuperNodePathTo(superNodeConnection.Key, graph);
+                }
+            }
+        }
 
         public bool RecalculateSuperNodePathTo(SuperNode superNode, VoxelGraph graph)
         {
-            graph.MarkDirty(this);
-            SuperNodes.Remove(superNode);
+            SuperNodeConnection old = null;
+            if (SuperNodes.ContainsKey(superNode))
+            {
+                old = SuperNodes[superNode];
+                SuperNodes.Remove(superNode);
+            }
             var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
             var queue = new PriorityQueue<Edge>();
             foreach (var neighbour in neighbours)
@@ -91,10 +107,23 @@ namespace Pathfinding.Graphs
                 else
                 {
                     var dist = n.Length + n.To.SuperNodes[superNode].Length;
-                    ConnectSuperNode(n.To, superNode, dist);
+                    if (old != null && old.To.Equals(n.To) && old.Length.Equals(dist))
+                    {
+                        ConnectSuperNode(n.To, superNode, dist);
+                    }
+                    else
+                    {
+                        ConnectSuperNode(n.To, superNode, dist);
+                        graph.MarkDirty(this);
+                        foreach (var neighbour in neighbours)
+                        {
+                            neighbour.To.RecalculateSuperNodePathTo(superNode, graph);
+                        }
+                    }
                     return true;
                 }
             }
+            graph.MarkDirty(this);
             superNode.RemoveChildNode(this);
             return false;
         }
