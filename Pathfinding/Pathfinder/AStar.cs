@@ -19,7 +19,7 @@ namespace Pathfinding.Pathfinder
             foreach (var f in from)
             {
                 var nodeFrom = new VisitedNode(f.Key, null, f.Value);
-                openSet.Enqueue(nodeFrom, (int)(nodeFrom.GetCost(nodeTo) * 10));
+                openSet.Enqueue(nodeFrom, nodeFrom.GetCost(nodeTo));
             }
             if (nodeTo.GridNode == null)
             {
@@ -44,13 +44,13 @@ namespace Pathfinding.Pathfinder
                         if (pathNode.Status == NodeStatus.Closed)
                             continue;
                         var node = new VisitedNode(neighbour.To, curNode, neighbour.Length);
-                        if (openSet.Update(pathNode, (int) (pathNode.GetCost(nodeTo) * 10), node, (int) (node.GetCost(nodeTo) * 10)))
+                        if (openSet.Update(pathNode, pathNode.GetCost(nodeTo), node, node.GetCost(nodeTo)))
                             pathNodeMap[neighbour.To] = node;
                     }
                     else
                     {
                         var node = new VisitedNode(neighbour.To, curNode, neighbour.Length);
-                        openSet.Enqueue(node, (int)(node.GetCost(nodeTo) * 10));
+                        openSet.Enqueue(node, node.GetCost(nodeTo));
                         pathNodeMap[neighbour.To] = node;
                     }
                 }

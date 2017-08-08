@@ -103,19 +103,58 @@ namespace Pathfinding.Tests
         public void RemovingNodesDoesActuallyRemoveThem()
         {
             var graph = new VoxelGraph();
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 300; i++)
             {
-                for (var j = 0; j < 10; j++)
-                {
-                    graph.AddNode(i, 0, j);
-                }
+                graph.AddNode(i, 0, 0);
             }
             graph.AddTier1Nodes(10);
             graph.RemoveNode(new Vector3I(1, 0, 0));
-            var path = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(2, 0, 0));
+            var path = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(299, 0, 0), true);
             path.Task.Wait();
             Assert.True(path.Finished);
-            Assert.Equal(path.Length, Math.Sqrt(2) * 2, 2);
+            Assert.Equal(0, path.Length);
+
+            var pathHl = Path.Calculate(graph, new Vector3I(0, 0, 0), new Vector3I(299, 0, 0));
+            pathHl.Task.Wait();
+            Assert.True(pathHl.Finished);
+            Assert.Equal(0, pathHl.Length);
+        }
+
+        [Fact]
+        public void RemovingNodesReplansSupernodeConnections()
+        {
+            /*
+             *      #
+             *      #
+             *        #
+             *      #   X
+             *      #   #
+             *      #   #
+             *        #
+             * 
+             * 
+             * 
+             */
+            var graph = new VoxelGraph();
+            graph.AddNode(5, 5, 0);
+            graph.AddNode(5, 6, 0);
+            graph.AddNode(6, 7, 0);
+            graph.AddNode(5, 8, 0);
+            graph.AddNode(5, 9, 0);
+            graph.AddNode(5, 10, 0);
+            graph.AddNode(6, 11, 0);
+            graph.AddNode(7, 10, 0);
+            graph.AddNode(7, 9, 0);
+            graph.AddNode(7, 8, 0);
+            graph.AddTier1Nodes(10);
+
+            Assert.Equal(3.83, graph.GetNode(new Vector3I(7, 8, 0)).SuperNodes.Values.First().Length, 2);
+            Assert.Equal(4.83, graph.GetNode(new Vector3I(7, 9, 0)).SuperNodes.Values.First().Length, 2);
+
+            graph.RemoveNode(new Vector3I(7, 8, 0));
+
+            Assert.Equal(9.66, graph.GetNode(new Vector3I(7, 9, 0)).SuperNodes.Values.First().Length, 2);
+
         }
 
         #region util

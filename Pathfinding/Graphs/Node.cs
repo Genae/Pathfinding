@@ -55,7 +55,44 @@ namespace Pathfinding.Graphs
             {
                 neighbour.To.RemoveNeighbour(this);
             }
+            foreach (var superNode in SuperNodes.Keys)
+            {
+                superNode.RemoveChildNode(this);
+                foreach (var neighbour in GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode) && n.To.SuperNodes[superNode].To.Equals(this)))
+                {
+                    neighbour.To.RecalculateSuperNodePathTo(superNode);
+                }
+            }
         }
 
+        public bool RecalculateSuperNodePathTo(SuperNode superNode)
+        {
+            SuperNodes.Remove(superNode);
+            var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
+            var queue = new PriorityQueue<Edge>();
+            foreach (var neighbour in neighbours)
+            {
+                queue.Enqueue(neighbour, neighbour.To.SuperNodes[superNode].Length + neighbour.Length);
+            }
+            while (!queue.IsEmpty())
+            {
+                var n = queue.Dequeue();
+                if (n.To.SuperNodes[superNode].To.Equals(this))
+                {
+                    if (n.To.RecalculateSuperNodePathTo(superNode))
+                    {
+                        queue.Enqueue(n, n.To.SuperNodes[superNode].Length + n.Length);
+                    }
+                }
+                else
+                {
+                    var dist = n.Length + n.To.SuperNodes[superNode].Length;
+                    ConnectSuperNode(n.To, superNode, dist);
+                    return true;
+                }
+            }
+            superNode.RemoveChildNode(this);
+            return false;
+        }
     }
 }

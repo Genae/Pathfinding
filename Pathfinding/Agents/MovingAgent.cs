@@ -9,7 +9,7 @@ namespace Pathfinding.Agents
     {
         public Path FollowPath(Path path, VoxelGraph graph)
         {
-            if (path.IsT0)
+            if (path.IsT0 || path.Nodes == null)
             {
                 return path;
             }

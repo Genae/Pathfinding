@@ -24,12 +24,12 @@ namespace Pathfinding.Pathfinder
                         var newNode = new VisitedNode(neighbour.To, current, neighbour.Length);
                         if (pathNodeMap.ContainsKey(neighbour.To))
                         {
-                            if(openQueue.Update(pathNodeMap[neighbour.To], (int)(pathNodeMap[neighbour.To].GScore * 10), newNode, (int)(newNode.GScore * 10)))
+                            if(openQueue.Update(pathNodeMap[neighbour.To], pathNodeMap[neighbour.To].GScore, newNode, newNode.GScore))
                                 pathNodeMap[neighbour.To] = newNode;
                         }
                         else
                         {
-                            openQueue.Enqueue(newNode, (int)(newNode.GScore*10));
+                            openQueue.Enqueue(newNode, newNode.GScore);
                             pathNodeMap[neighbour.To] = newNode;
                         }
                     }
@@ -47,7 +47,7 @@ namespace Pathfinding.Pathfinder
                 if (childNode.SuperNodes[superNode].Length > gridSize * 0.8)
                 {
                     pathNodeMap[childNode] = new VisitedNode(childNode, null, childNode.SuperNodes[superNode].Length);
-                    openQueue.Enqueue(pathNodeMap[childNode], (int)(pathNodeMap[childNode].GScore*10));
+                    openQueue.Enqueue(pathNodeMap[childNode], pathNodeMap[childNode].GScore);
                 }
             }
             while (!openQueue.IsEmpty())
@@ -62,12 +62,12 @@ namespace Pathfinding.Pathfinder
                         var newNode = new VisitedNode(neighbour.To, current, neighbour.Length);
                         if (pathNodeMap.ContainsKey(neighbour.To))
                         {
-                            if (openQueue.Update(pathNodeMap[neighbour.To], (int)(pathNodeMap[neighbour.To].GScore * 10), newNode, (int)(newNode.GScore * 10)))
+                            if (openQueue.Update(pathNodeMap[neighbour.To], pathNodeMap[neighbour.To].GScore, newNode, newNode.GScore))
                                 pathNodeMap[neighbour.To] = newNode;
                         }
                         else
                         {
-                            openQueue.Enqueue(newNode, (int)(newNode.GScore * 10));
+                            openQueue.Enqueue(newNode, newNode.GScore);
                             pathNodeMap[neighbour.To] = newNode;
                         }
                     }

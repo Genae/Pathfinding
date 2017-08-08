@@ -41,8 +41,9 @@ namespace Pathfinding.Utils
             return deq;
         }
         
-        public void Enqueue(T item, int prio)
+        public void Enqueue(T item, float priority)
         {
+            var prio = PrioToInt(priority);
             if (!_storage.ContainsKey(prio))
             {
                 if (_lowestPrio < 0 || _lowestPrio > prio)
@@ -54,12 +55,17 @@ namespace Pathfinding.Utils
 
         }
 
+        private static int PrioToInt(float priority)
+        {
+            return (int) (priority * 10);
+        }
+
         public float GetPrio()
         {
             return _lowestPrio;
         }
         
-        public bool Update(T oldObj, int oldPrio, T newObj, int newPrio)
+        public bool Update(T oldObj, float oldPrio, T newObj, float newPrio)
         {
             if (oldPrio <= newPrio)
                 return false;
@@ -68,21 +74,21 @@ namespace Pathfinding.Utils
             return true;
         }
 
-        private void Dequeue(T oldObj, int oldPrio)
+        private void Dequeue(T oldObj, float priority)
         {
-            var q = _storage[oldPrio];
-            int index = q.IndexOf(oldObj);
+            var prio = PrioToInt(priority);
+            var q = _storage[prio];
+            var index = q.IndexOf(oldObj);
             q[index] = q[q.Count - 1];
             q.RemoveAt(q.Count - 1);
             _totalSize--;
-            if (q.Count == 0)
-            {
-                _storage.Remove(oldPrio);
-                if (IsEmpty())
-                    _lowestPrio = -1;
-                else if(oldPrio == _lowestPrio)
-                    _lowestPrio = _storage.First().Key;
-            }
+            if (q.Count != 0)
+                return;
+            _storage.Remove(prio);
+            if (IsEmpty())
+                _lowestPrio = -1;
+            else if(prio == _lowestPrio)
+                _lowestPrio = _storage.First().Key;
         }
     }
 }

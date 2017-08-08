@@ -39,5 +39,10 @@ namespace Pathfinding.Graphs
             if (k != null)
                 _neighbours.Remove(k);
         }
+
+        public void RemoveChildNode(Node node)
+        {
+            ChildNodes.Remove(node);
+        }
     }
 }

@@ -93,7 +93,15 @@ namespace Pathfinding.Pathfinder
     {
         private readonly VoxelGraph _graph;
         private Path _drilledDownPath;
-        public Path DrilledDownPath => _drilledDownPath ?? (_drilledDownPath = CreateDrilledDownPath());
+        public Path ExactPath
+        {
+            get
+            {
+                if (Nodes == null || Nodes.Count == 0)
+                    return null;
+                return _drilledDownPath ?? (_drilledDownPath = CreateDrilledDownPath());
+            }
+        }
 
         private Path CreateDrilledDownPath()
         {
@@ -103,7 +111,7 @@ namespace Pathfinding.Pathfinder
 
         public override float Length
         {
-            get { return DrilledDownPath.Length; }
+            get { return ExactPath?.Length??0; }
             set { }
         }
 
