@@ -19,7 +19,7 @@ namespace Pathfinding.Pathfinder
                 current.GridNode.ConnectSuperNode(current.Prev?.GridNode, supernode, current.GScore);
                 foreach (var neighbour in current.GridNode.GetNeighbours())
                 {
-                    if (!neighbour.To.SuperNodes.ContainsKey(supernode) && neighbour.Length + current.GScore < range)
+                    if (!neighbour.To.SuperNodes.ContainsKey(supernode) && neighbour.Length + current.GScore <= range)
                     {
                         var newNode = new VisitedNode(neighbour.To, current, neighbour.Length);
                         if (pathNodeMap.ContainsKey(neighbour.To))
@@ -54,7 +54,7 @@ namespace Pathfinding.Pathfinder
             {
                 var current = openQueue.Dequeue();
                 if(!current.GridNode.SuperNodes.ContainsKey(superNode))
-                    current.GridNode.ConnectSuperNode(current.Prev?.GridNode ?? superNode, superNode, current.GScore, false);
+                    current.GridNode.ConnectSuperNode(current.Prev?.GridNode ?? superNode, superNode, current.GScore);
                 foreach (var neighbour in current.GridNode.GetNeighbours())
                 {
                     if (!neighbour.To.SuperNodes.ContainsKey(superNode) && neighbour.To.SuperNodes.Any(k => k.Value.Length <= gridSize && nodesToFill.Contains(k.Key)))

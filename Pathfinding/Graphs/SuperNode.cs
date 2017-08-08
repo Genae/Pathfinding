@@ -6,11 +6,13 @@ namespace Pathfinding.Graphs
 {
     public class SuperNode : Node
     {
+        public readonly int GridSize;
         public List<Node> ChildNodes = new List<Node>();
         private readonly Dictionary<SuperNode, Edge> _neighbours = new Dictionary<SuperNode, Edge>(); 
 
-        public SuperNode(Vector3I position) : base(position)
+        public SuperNode(Vector3I position, int gridSize) : base(position)
         {
+            GridSize = gridSize;
         }
 
         public bool ConnectTo(SuperNode node, float dist, Node via)

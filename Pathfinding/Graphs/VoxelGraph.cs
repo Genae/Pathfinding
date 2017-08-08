@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Pathfinding.Pathfinder;
 using Pathfinding.Utils;
 
@@ -9,13 +10,20 @@ namespace Pathfinding.Graphs
     {
         private readonly Grid3D<Node> _grid = new Grid3D<Node>();
         private readonly Grid3D<SuperNode> _gridT1 = new Grid3D<SuperNode>();
+        private readonly HashSet<Node> _dirtyNodes = new HashSet<Node>();
+        private int _gridSize;
 
         public void AddNode(int xPos, int yPos, int zPos)
         {
             _grid[xPos, yPos, zPos] = new T0Node(new Vector3I(xPos, yPos, zPos));
             ConnectNeighbours(xPos, yPos, zPos);
         }
-        
+
+        public void MarkDirty(Node node)
+        {
+            _dirtyNodes.Add(node);
+        }
+
         public Vector3I GetSize()
         {
             return _grid.GetSize();
@@ -51,18 +59,36 @@ namespace Pathfinding.Graphs
                 }
             }
         }
-        public void RemoveNode(Vector3I vector3I)
+        public void RemoveNode(Vector3I pos)
         {
-            var node = _grid.Get(vector3I.x, vector3I.y, vector3I.z);
-            node.Delete();
-            _grid.Remove(vector3I);
+            var node = _grid.Get(pos.x, pos.y, pos.z);
+            node.Delete(this);
+            _grid.Remove(pos);
+            ProcessDirtyNodes();
+        }
+
+        private void ProcessDirtyNodes()
+        {
+            foreach (var dirtyNode in _dirtyNodes)
+            {
+                if (!dirtyNode.HasDirectSupernode)
+                {
+                    var supernode = new SuperNode(dirtyNode.Position, _gridSize);
+                    _gridT1[dirtyNode.Position.x, dirtyNode.Position.y, dirtyNode.Position.z] = supernode;
+
+                    Dijkstra.Fill(GetNode(supernode.Position), _gridSize, supernode);
+                    EnsureNeighbourCoverage(_gridSize, new List<SuperNode>(){supernode});
+                }
+
+            }
         }
 
         public void AddTier1Nodes(int gridSize)
         {
+            _gridSize = gridSize;
             var size = GetSize();
             AddSupernodeGrid(gridSize, size);
-            FillSupernodeHoles(gridSize, size);
+            FillSupernodeHoles(gridSize, size, Vector3I.zero);
             EnsureNeighbourCoverage(gridSize);
         }
         
@@ -77,7 +103,7 @@ namespace Pathfinding.Graphs
                         var node = _grid.GetNearestItem(new Vector3I(dX, dY, dZ), 5);
                         if (node == null)
                             continue;
-                        var supernode = new SuperNode(node.Position);
+                        var supernode = new SuperNode(node.Position, gridSize);
                         _gridT1[dX, dY, dZ] = supernode;
 
                         Dijkstra.Fill(GetNode(supernode.Position), gridSize, supernode);
@@ -85,31 +111,33 @@ namespace Pathfinding.Graphs
                 }
             }
         }
-
-        private void FillSupernodeHoles(int gridSize, Vector3I size)
+        
+        private void FillSupernodeHoles(int gridSize, Vector3I size, Vector3I startPosition)
         {
-            for (var dX = 0; dX <= size[0]; dX++)
+            for (var dX = startPosition.x; dX <= size[0]; dX++)
             {
-                for (var dY = 0; dY <= size[1]; dY++)
+                for (var dY = startPosition.y; dY <= size[1]; dY++)
                 {
-                    for (var dZ = 0; dZ <= size[2]; dZ++)
+                    for (var dZ = startPosition.z; dZ <= size[2]; dZ++)
                     {
                         var node = _grid[dX, dY, dZ];
                         if (node == null || node.SuperNodes.Count > 0)
                             continue;
-                        var supernode = new SuperNode(node.Position);
+                        var supernode = new SuperNode(node.Position, gridSize);
                         _gridT1[dX, dY, dZ] = supernode;
 
                         Dijkstra.Fill(GetNode(supernode.Position), gridSize, supernode);
                     }
                 }
             }
+            return;
         }
 
 
-        private void EnsureNeighbourCoverage(int gridSize)
+        private void EnsureNeighbourCoverage(int gridSize, List<SuperNode> nodes = null)
         {
-            foreach (var superNode in _gridT1)
+            nodes = nodes ?? _gridT1.ToList();
+            foreach (var superNode in nodes)
             {
                 Dijkstra.FillNeigbours(superNode, gridSize);
             }

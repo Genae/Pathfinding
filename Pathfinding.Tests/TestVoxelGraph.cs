@@ -157,6 +157,62 @@ namespace Pathfinding.Tests
 
         }
 
+
+        [Fact]
+        public void RemovingNodesSeperatesConnections()
+        {
+            /*
+             *      #
+             *      #
+             *      x
+             *      #   
+             *      #  
+             *      #   
+             *       
+             * 
+             * 
+             * 
+             */
+            var graph = new VoxelGraph();
+            graph.AddNode(5, 5, 0);
+            graph.AddNode(5, 6, 0);
+            graph.AddNode(5, 7, 0);
+            graph.AddNode(5, 8, 0);
+            graph.AddNode(5, 9, 0);
+            graph.AddNode(5, 10, 0);
+            graph.AddTier1Nodes(10);
+
+
+            var superNode = graph.GetT1Nodes().First() as SuperNode;
+            Assert.NotNull(superNode);
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 5, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 6, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 7, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 8, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 9, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 10, 0)).SuperNodes.Keys.ToList());
+
+            graph.RemoveNode(new Vector3I(5, 7, 0));
+
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 5, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 6, 0)).SuperNodes.Keys.ToList());
+
+            Assert.DoesNotContain(superNode, graph.GetNode(new Vector3I(5, 8, 0)).SuperNodes.Keys.ToList());
+            Assert.DoesNotContain(superNode, graph.GetNode(new Vector3I(5, 9, 0)).SuperNodes.Keys.ToList());
+            Assert.DoesNotContain(superNode, graph.GetNode(new Vector3I(5, 10, 0)).SuperNodes.Keys.ToList());
+
+            Assert.Contains(graph.GetNode(new Vector3I(5, 5, 0)), superNode.ChildNodes);
+            Assert.Contains(graph.GetNode(new Vector3I(5, 6, 0)), superNode.ChildNodes);
+            Assert.Equal(2, superNode.ChildNodes.Count);
+
+            Assert.Equal(2, graph.GetT1Nodes().Count());
+            var superNode2 = graph.GetT1Nodes().Last();
+            Assert.Contains(superNode2, graph.GetNode(new Vector3I(5, 8, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode2, graph.GetNode(new Vector3I(5, 9, 0)).SuperNodes.Keys.ToList());
+            Assert.Contains(superNode2, graph.GetNode(new Vector3I(5, 10, 0)).SuperNodes.Keys.ToList());
+
+        }
+
         #region util
         private Bitmap LoadImage(string path)
         {

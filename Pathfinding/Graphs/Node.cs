@@ -9,13 +9,16 @@ namespace Pathfinding.Graphs
         public Dictionary<SuperNode, SuperNodeConnection> SuperNodes = new Dictionary<SuperNode, SuperNodeConnection>();
         public Vector3I Position;
 
+        public bool HasDirectSupernode => SuperNodes.Any(kv => kv.Value.Length <= kv.Value.SuperNode.GridSize);
+
         protected Node(Vector3I position)
         {
             Position = position;
         }
 
-        public void ConnectSuperNode(Node from, SuperNode superNode, float dist, bool directChild = true)
+        public void ConnectSuperNode(Node from, SuperNode superNode, float dist)
         {
+            var directChild = dist <= superNode.GridSize;
             if (SuperNodes.ContainsKey(superNode))
             {
                 if (SuperNodes[superNode].Length <= dist)
@@ -49,7 +52,7 @@ namespace Pathfinding.Graphs
         public abstract List<Edge> GetNeighbours();
         protected abstract void RemoveNeighbour(Node node);
 
-        public void Delete()
+        public void Delete(VoxelGraph graph)
         {
             foreach (var neighbour in GetNeighbours())
             {
@@ -60,13 +63,14 @@ namespace Pathfinding.Graphs
                 superNode.RemoveChildNode(this);
                 foreach (var neighbour in GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode) && n.To.SuperNodes[superNode].To.Equals(this)))
                 {
-                    neighbour.To.RecalculateSuperNodePathTo(superNode);
+                    neighbour.To.RecalculateSuperNodePathTo(superNode, graph);
                 }
             }
         }
 
-        public bool RecalculateSuperNodePathTo(SuperNode superNode)
+        public bool RecalculateSuperNodePathTo(SuperNode superNode, VoxelGraph graph)
         {
+            graph.MarkDirty(this);
             SuperNodes.Remove(superNode);
             var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
             var queue = new PriorityQueue<Edge>();
@@ -79,7 +83,7 @@ namespace Pathfinding.Graphs
                 var n = queue.Dequeue();
                 if (n.To.SuperNodes[superNode].To.Equals(this))
                 {
-                    if (n.To.RecalculateSuperNodePathTo(superNode))
+                    if (n.To.RecalculateSuperNodePathTo(superNode, graph))
                     {
                         queue.Enqueue(n, n.To.SuperNodes[superNode].Length + n.Length);
                     }

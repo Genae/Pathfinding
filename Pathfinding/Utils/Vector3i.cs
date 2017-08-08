@@ -8,6 +8,8 @@ namespace Pathfinding.Utils
         public int y;
         public int z;
 
+        public static Vector3I zero => new Vector3I(0, 0, 0);
+
         public Vector3I(int xPos, int yPos, int zPos)
         {
             x = xPos;
