@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using Pathfinding.Agents;
 using Xunit;
 using Pathfinding.Graphs;
 using Pathfinding.Utils;

@@ -34,7 +34,7 @@ namespace Pathfinding.Graphs
             {
                 foreach (var snode in SuperNodes.Keys)
                 {
-                    if (snode == superNode)
+                    if (snode == superNode || SuperNodes[snode].Length > superNode.GridSize)
                         continue;
                     snode.ConnectTo(superNode, dist, from);
                 }
@@ -63,24 +63,24 @@ namespace Pathfinding.Graphs
                 superNode.RemoveChildNode(this);
                 foreach (var neighbour in GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode) && n.To.SuperNodes[superNode].To.Equals(this)))
                 {
-                    neighbour.To.RecalculateSuperNodePathTo(superNode, graph);
+                    neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
                 }
             }
         }
         
-        public void ConnectToSupernodes(VoxelGraph graph)
+        public void ConnectToSupernodes()
         {
             foreach (var neighbour in GetNeighbours())
             {
                 foreach (var superNodeConnection in neighbour.To.SuperNodes.ToList())
                 {
                     if (!SuperNodes.ContainsKey(superNodeConnection.Key))
-                        RecalculateSuperNodePathTo(superNodeConnection.Key, graph);
+                        RecalculateSuperNodePathAfterAdd(superNodeConnection.Key);
                 }
             }
         }
 
-        public bool RecalculateSuperNodePathTo(SuperNode superNode, VoxelGraph graph)
+        public bool RecalculateSuperNodePathAfterDelete(SuperNode superNode, VoxelGraph graph)
         {
             SuperNodeConnection old = null;
             if (SuperNodes.ContainsKey(superNode))
@@ -99,7 +99,7 @@ namespace Pathfinding.Graphs
                 var n = queue.Dequeue();
                 if (n.To.SuperNodes[superNode].To.Equals(this))
                 {
-                    if (n.To.RecalculateSuperNodePathTo(superNode, graph))
+                    if (n.To.RecalculateSuperNodePathAfterDelete(superNode, graph))
                     {
                         queue.Enqueue(n, n.To.SuperNodes[superNode].Length + n.Length);
                     }
@@ -117,7 +117,7 @@ namespace Pathfinding.Graphs
                         graph.MarkDirty(this);
                         foreach (var neighbour in neighbours)
                         {
-                            neighbour.To.RecalculateSuperNodePathTo(superNode, graph);
+                            neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
                         }
                     }
                     return true;
@@ -126,6 +126,34 @@ namespace Pathfinding.Graphs
             graph.MarkDirty(this);
             superNode.RemoveChildNode(this);
             return false;
+        }
+
+
+        public void RecalculateSuperNodePathAfterAdd(SuperNode superNode)
+        {
+            var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
+            var queue = new PriorityQueue<Edge>();
+            foreach (var neighbour in neighbours)
+            {
+                queue.Enqueue(neighbour, neighbour.To.SuperNodes[superNode].Length + neighbour.Length);
+            }
+            while (!queue.IsEmpty())
+            {
+                var n = queue.Dequeue();
+                if (!Equals(n.To.SuperNodes[superNode].To))
+                {
+                    var dist = n.Length + n.To.SuperNodes[superNode].Length;
+                    if (!SuperNodes.ContainsKey(superNode) || SuperNodes[superNode].Length > dist)
+                    {
+                        ConnectSuperNode(n.To, superNode, dist);
+                        foreach (var neighbour in neighbours.Where(ne => Equals(ne.To)))
+                        {
+                            neighbour.To.RecalculateSuperNodePathAfterAdd(superNode);
+                        }
+                        return;
+                    }
+                }
+            }
         }
     }
 }

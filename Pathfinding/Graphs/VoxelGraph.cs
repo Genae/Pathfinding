@@ -20,9 +20,8 @@ namespace Pathfinding.Graphs
             ConnectNeighbours(xPos, yPos, zPos);
             if (_gridSize > 0)
             {
-                node.ConnectToSupernodes(this);
+                node.ConnectToSupernodes();
             }
-            ProcessDirtyNodes();
         }
 
         public void MarkDirty(Node node)
