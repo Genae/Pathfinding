@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Pathfinding.Graphs;
 using Pathfinding.Pathfinder;
@@ -20,6 +21,8 @@ namespace Pathfinding.Agents
             float length = 0;
             while (!curNode.SuperNodes.ContainsKey(lastSuper))
             {
+                if(visited.Contains(curNode))
+                    throw new Exception("Loop detected");
                 visited.Add(curNode);
                 for (var i = 1; i >= 0; i--)
                 {

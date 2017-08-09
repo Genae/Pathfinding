@@ -74,18 +74,21 @@ namespace Pathfinding.Graphs
 
         private void ProcessDirtyNodes()
         {
-            foreach (var dirtyNode in _dirtyNodes)
+            foreach (var dirtyNode in _dirtyNodes.ToArray())
             {
+                var node = GetNode(dirtyNode.Position);
+                if (node == null)
+                    continue;
                 if (!dirtyNode.HasDirectSupernode)
                 {
                     var supernode = new SuperNode(dirtyNode.Position, _gridSize);
                     _gridT1[dirtyNode.Position.x, dirtyNode.Position.y, dirtyNode.Position.z] = supernode;
 
-                    Dijkstra.Fill(GetNode(supernode.Position), _gridSize, supernode);
+                    Dijkstra.Fill(node, _gridSize, supernode);
                     EnsureNeighbourCoverage(_gridSize, new List<SuperNode>(){supernode});
                 }
-
             }
+            _dirtyNodes.Clear();
         }
 
         public void AddTier1Nodes(int gridSize)
@@ -101,7 +104,7 @@ namespace Pathfinding.Graphs
         { 
             for (var dX = Math.Min(gridSize / 2, size[0]); dX <= size[0]; dX += gridSize)
             {
-                for (var dY = Math.Min(gridSize / 2, size[1]) / 2; dY <= size[1]; dY += gridSize)
+                for (var dY = Math.Min(gridSize / 2, size[1]); dY <= size[1]; dY += gridSize)
                 {
                     for (var dZ = Math.Min(gridSize / 2, size[2]); dZ <= size[2]; dZ += gridSize)
                     {

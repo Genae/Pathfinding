@@ -52,16 +52,21 @@ namespace Pathfinding.Graphs
         public abstract List<Edge> GetNeighbours();
         protected abstract void RemoveNeighbour(Node node);
 
-        public void Delete(VoxelGraph graph)
+        public virtual void Delete(VoxelGraph graph)
         {
             foreach (var neighbour in GetNeighbours())
             {
                 neighbour.To.RemoveNeighbour(this);
             }
+            var directSuperNode = SuperNodes.FirstOrDefault(sn => sn.Value.Length.Equals(0)).Value;
+            if (directSuperNode != null)
+            {
+                directSuperNode.SuperNode.Delete(graph);
+            }
             foreach (var superNode in SuperNodes.Keys)
             {
                 superNode.RemoveChildNode(this);
-                foreach (var neighbour in GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode) && n.To.SuperNodes[superNode].To.Equals(this)))
+                foreach (var neighbour in GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode) && Equals(n.To.SuperNodes[superNode].To)))
                 {
                     neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
                 }
@@ -97,7 +102,9 @@ namespace Pathfinding.Graphs
             while (!queue.IsEmpty())
             {
                 var n = queue.Dequeue();
-                if (n.To.SuperNodes[superNode].To.Equals(this))
+                if (!n.To.SuperNodes.ContainsKey(superNode))
+                    continue;
+                if (Equals(n.To.SuperNodes[superNode].To))
                 {
                     if (n.To.RecalculateSuperNodePathAfterDelete(superNode, graph))
                     {
@@ -115,10 +122,10 @@ namespace Pathfinding.Graphs
                     {
                         ConnectSuperNode(n.To, superNode, dist);
                         graph.MarkDirty(this);
-                        foreach (var neighbour in neighbours)
-                        {
-                            neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
-                        }
+                    }
+                    foreach (var neighbour in GetNeighbours().Where(ne => ne.To.SuperNodes.ContainsKey(superNode) && Equals(ne.To.SuperNodes[superNode].To)))
+                    {
+                        neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
                     }
                     return true;
                 }
@@ -127,8 +134,7 @@ namespace Pathfinding.Graphs
             superNode.RemoveChildNode(this);
             return false;
         }
-
-
+        
         public void RecalculateSuperNodePathAfterAdd(SuperNode superNode)
         {
             var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
@@ -153,6 +159,18 @@ namespace Pathfinding.Graphs
                         return;
                     }
                 }
+            }
+        }
+
+        public void KillSuperNode(SuperNode node, VoxelGraph graph)
+        {
+            if(SuperNodes[node].Length <= node.GridSize)
+                graph.MarkDirty(this);
+            SuperNodes.Remove(node);
+            foreach (var neighbour in GetNeighbours())
+            {
+                if (neighbour.To.SuperNodes.ContainsKey(node))
+                    neighbour.To.KillSuperNode(node, graph);
             }
         }
     }

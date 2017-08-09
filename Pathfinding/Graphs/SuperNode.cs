@@ -7,7 +7,7 @@ namespace Pathfinding.Graphs
     public class SuperNode : Node
     {
         public readonly int GridSize;
-        public List<Node> ChildNodes = new List<Node>();
+        public HashSet<Node> ChildNodes = new HashSet<Node>();
         private readonly Dictionary<SuperNode, Edge> _neighbours = new Dictionary<SuperNode, Edge>(); 
 
         public SuperNode(Vector3I position, int gridSize) : base(position)
@@ -34,6 +34,12 @@ namespace Pathfinding.Graphs
             return _neighbours.Values.ToList();
         }
 
+        public override void Delete(VoxelGraph graph)
+        {
+            var mainChild = graph.GetNode(Position);
+            mainChild.KillSuperNode(this, graph);
+            base.Delete(graph);
+        }
 
         protected override void RemoveNeighbour(Node node)
         {

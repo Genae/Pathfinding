@@ -201,6 +201,27 @@ namespace Pathfinding.Tests
             Assert.Contains(superNode2, graph.GetNode(new Vector3I(5, 10, 0)).SuperNodes.Keys.ToList());
 
         }
+
+        [Fact]
+        public void CanCleanlyRemoveSupernode()
+        {
+            var graph = new VoxelGraph();
+            for (var i = 0; i < 200; i++)
+            {
+                for (var j = 0; j < 200; j++)
+                {
+                    graph.AddNode(i, j, 0);
+                }
+            }
+            graph.AddTier1Nodes(10);
+            var superNode = graph.GetNode(new Vector3I(5, 5, 0)).GetClosestSuperNode();
+
+            Assert.Contains(superNode, graph.GetNode(new Vector3I(5, 6, 0)).SuperNodes.Keys.ToList());
+            graph.RemoveNode(new Vector3I(5, 5, 0));
+
+            Assert.DoesNotContain(superNode, graph.GetNode(new Vector3I(5, 6, 0)).SuperNodes.Keys.ToList());
+
+        }
     }
 
     public class TestBase
