@@ -124,7 +124,7 @@ namespace Pathfinding.Graphs
                         graph.MarkDirty(this);
                         foreach (var neighbour in GetNeighbours().Where(ne => ne.To.SuperNodes.ContainsKey(superNode) && Equals(ne.To.SuperNodes[superNode].To)))
                         {
-                            neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
+                            neighbour.To.RecalculateSuperNodePathAfterDeleteRec(superNode, graph);
                         }
                     }
                     return true;
@@ -134,7 +134,45 @@ namespace Pathfinding.Graphs
             superNode.RemoveChildNode(this);
             return false;
         }
-        
+
+        private void RecalculateSuperNodePathAfterDeleteRec(SuperNode superNode, VoxelGraph graph)
+        {
+            var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode));
+            float length = 0;
+            Edge closest = null;
+            foreach (var neighbour in neighbours)
+            {
+                var curDist = neighbour.Length + neighbour.To.SuperNodes[superNode].Length;
+                if (closest == null)
+                {
+                    closest = neighbour;
+                    length = curDist;
+                }
+                else if(length > curDist)
+                {
+                    closest = neighbour;
+                    length = curDist;
+                }
+            }
+            if (closest == null || closest.To.Equals(SuperNodes[superNode].To))
+            {
+                if (SuperNodes[superNode].Length.Equals(length))
+                    return;
+                SuperNodes[superNode].Length = length;
+            }
+            else
+            {
+                SuperNodes.Remove(superNode);
+                ConnectSuperNode(closest.To, superNode, length);
+                foreach (var neighbour in GetNeighbours().Where(ne => ne.To.SuperNodes.ContainsKey(superNode) && Equals(ne.To.SuperNodes[superNode].To)))
+                {
+                    neighbour.To.RecalculateSuperNodePathAfterDeleteRec(superNode, graph);
+                }
+            }
+            if(length >= superNode.GridSize)
+                graph.MarkDirty(this);
+        }
+
         public void RecalculateSuperNodePathAfterAdd(SuperNode superNode)
         {
             var neighbours = GetNeighbours().Where(n => n.To.SuperNodes.ContainsKey(superNode)).ToList();
