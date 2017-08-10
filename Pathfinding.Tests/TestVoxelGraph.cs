@@ -113,7 +113,7 @@ namespace Pathfinding.Tests
         public void RemovingNodesReplansSupernodeConnections()
         {
             /*
-             *      #
+             *      S
              *      #
              *        #
              *      #   X

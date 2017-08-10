@@ -122,10 +122,10 @@ namespace Pathfinding.Graphs
                     {
                         ConnectSuperNode(n.To, superNode, dist);
                         graph.MarkDirty(this);
-                    }
-                    foreach (var neighbour in GetNeighbours().Where(ne => ne.To.SuperNodes.ContainsKey(superNode) && Equals(ne.To.SuperNodes[superNode].To)))
-                    {
-                        neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
+                        foreach (var neighbour in GetNeighbours().Where(ne => ne.To.SuperNodes.ContainsKey(superNode) && Equals(ne.To.SuperNodes[superNode].To)))
+                        {
+                            neighbour.To.RecalculateSuperNodePathAfterDelete(superNode, graph);
+                        }
                     }
                     return true;
                 }
