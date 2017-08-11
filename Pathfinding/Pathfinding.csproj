@@ -47,8 +47,8 @@
     <Compile Include="Pathfinder\AStar.cs" />
     <Compile Include="Pathfinder\Dijkstra.cs" />
     <Compile Include="Pathfinder\Path.cs" />
+    <Compile Include="Pathfinder\PathRegistry.cs" />
     <Compile Include="Pathfinder\VisitedNode.cs" />
-    <Compile Include="Pathfinding.cs" />
     <Compile Include="Utils\PriorityQueue.cs" />
     <Compile Include="Utils\Promise.cs" />
     <Compile Include="Utils\Vector3.cs" />
