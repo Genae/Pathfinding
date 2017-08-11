@@ -11,6 +11,7 @@ namespace Pathfinding.Graphs
         private readonly Grid3D<Node> _grid = new Grid3D<Node>();
         private readonly Grid3D<SuperNode> _gridT1 = new Grid3D<SuperNode>();
         private readonly HashSet<Node> _dirtyNodes = new HashSet<Node>();
+        private readonly PathRegistry _pathRegistry = new PathRegistry();
         private int _gridSize;
 
         public void AddNode(int xPos, int yPos, int zPos)
@@ -44,6 +45,11 @@ namespace Pathfinding.Graphs
             return _gridT1;
         }
 
+        public PathRegistry GetPathRegistry()
+        {
+            return _pathRegistry;
+        }
+
         public void ConnectNeighbours(int xPos, int yPos, int zPos)
         {
             var node = _grid[xPos, yPos, zPos];
@@ -67,6 +73,7 @@ namespace Pathfinding.Graphs
         public void RemoveNode(Vector3I pos)
         {
             var node = _grid.Get(pos.x, pos.y, pos.z);
+            _pathRegistry.RemovedNode(node, this);
             node.Delete(this);
             _grid.Remove(pos);
             ProcessDirtyNodes();

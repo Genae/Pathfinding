@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,28 +8,39 @@ using Pathfinding.Utils;
 
 namespace Pathfinding.Pathfinder
 {
-    public class Path : Promise
+    public class Path : Promise, IDisposable
     {
         public List<Node> Nodes;
         public Node Start;
         public Node Target;
         public virtual float Length { get; set; }
         public bool IsT0;
+        public PathState State;
 
-        public Path(Node start, Node target)
+        private int _currentNode;
+        private readonly PathRegistry _registry;
+
+        public Path(Node start, Node target, PathRegistry registry)
         {
             IsT0 = false;
             Start = start;
             Target = target;
+            State = PathState.InitialCalulation;
+            _registry = registry;
+            _registry.ActivePaths.Add(this);
         }
 
 
         public Node GetNode(int i)
         {
+            if(State.Equals(PathState.Invalid) || State.Equals(PathState.Recalculation) && i > _currentNode)
+                throw new Exception("Path State is " + State);
             if (i > Nodes.Count - 1)
             {
+                Dispose();
                 return null;
             }
+            _currentNode = i;
             return Nodes[i];
         }
         
@@ -46,10 +58,12 @@ namespace Pathfinding.Pathfinder
             var start = graph.GetNode(from);
             var target = graph.GetNode(to);
             var path = new HighLevelPath(start, target, graph);
+            
             path.Task = new Task(() =>
             {
                 path = (HighLevelPath)AStar.GetPath(start.SuperNodes.ToDictionary(n => n.Key as Node, n => n.Value.Length), target.GetClosestSuperNode(), path);
                 path.Finished = true;
+                path.State = PathState.Ready;
             });
             path.Task.Start();
             return path;
@@ -59,11 +73,12 @@ namespace Pathfinding.Pathfinder
         {
             var start = graph.GetNode(from);
             var target = graph.GetNode(to);
-            var path = new Path(start, target);
+            var path = new Path(start, target, graph.GetPathRegistry());
             path.Task = new Task(() =>
             {
                 path = AStar.GetPath(start, target, path);
                 path.Finished = true;
+                path.State = PathState.Ready;
             });
             path.Task.Start();
             return path;
@@ -87,6 +102,41 @@ namespace Pathfinding.Pathfinder
 
             }
         }*/
+        public void Recalculate(Node removedNode, VoxelGraph graph)
+        {
+            if (Target.Equals(removedNode))
+            {
+                State = PathState.Invalid;
+            }
+            else
+            {
+                State = PathState.Recalculation;
+                var p2 = Calculate(graph, GetNode(_currentNode).Position, Target.Position);
+                Task = p2.Task.ContinueWith(task =>
+                {
+                    Nodes = p2.Nodes;
+                    Start = p2.Start;
+                    Length = p2.Length;
+                    IsT0 = p2.IsT0;
+                    State = p2.State;
+                    p2.Dispose();
+                });
+
+            }
+        }
+
+        public void Dispose()
+        {
+            _registry.ActivePaths.Remove(this);
+        }
+    }
+
+    public enum PathState
+    {
+        InitialCalulation,
+        Recalculation,
+        Invalid,
+        Ready
     }
 
     public class HighLevelPath : Path
@@ -117,7 +167,7 @@ namespace Pathfinding.Pathfinder
 
 
 
-        public HighLevelPath(Node start, Node target, VoxelGraph graph) : base(start, target)
+        public HighLevelPath(Node start, Node target, VoxelGraph graph) : base(start, target, graph.GetPathRegistry())
         {
             _graph = graph;
         }
